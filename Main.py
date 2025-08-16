@@ -16,7 +16,7 @@ Migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
-    Migrate(app, db)
+    Migrate.init_app(app, db)
 
     # Configurações ESSENCIAIS
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
