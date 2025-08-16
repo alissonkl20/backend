@@ -1,7 +1,8 @@
 from flask import Flask
-from flask_cors import CORS
+from flask import CORS
 from dotenv import load_dotenv
 from pathlib import Path
+from flask_migrate import Migrate
 from extensions import db
 import os
 from controller.CategoriaController import categoria_bp
@@ -11,8 +12,11 @@ from controller.ProdutoController import produto_bp
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path, override=True)
 
+Migrate = Migrate()
+
 def create_app():
     app = Flask(__name__)
+    Migrate(app, db)
 
     # Configurações ESSENCIAIS
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
@@ -38,4 +42,4 @@ app = create_app()
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Cria todas as tabelas definidas nos models
-    app.run(debug=True)
+    app.run()
