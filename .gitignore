@@ -1,0 +1,3 @@
+# .gitignore
+.env           # Ignora .env na raiz
+Backend/.env   # Ignora especificamente o .env do Backend
