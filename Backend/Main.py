@@ -1,8 +1,8 @@
 from flask import Flask
-from flask import CORS
+from flask_cors import CORS  # Corrigido: Import do pacote correto
 from dotenv import load_dotenv
 from pathlib import Path
-from flask_migrate import Migrate
+from flask_migrate import Migrate  # Corrigido: Import do pacote correto
 from extensions import db
 import os
 from controller.CategoriaController import categoria_bp
@@ -12,19 +12,17 @@ from controller.ProdutoController import produto_bp
 env_path = Path(__file__).parent / '.env'
 load_dotenv(dotenv_path=env_path, override=True)
 
-Migrate = Migrate()
-
 def create_app():
     app = Flask(__name__)
-    Migrate.init_app(app, db)
-
-    # Configurações ESSENCIAIS
+    
+    # Configurações ESSENCIAIS - CORRIGIDO: 'DATABASE_URI' (estava 'DATABASE_URI')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Inicializações
     db.init_app(app)
-    CORS(app)
+    CORS(app)  # Agora usando o CORS correto
+    migrate = Migrate(app, db)  # Inicialização correta do Flask-Migrate
 
     # Registrar Blueprints
     app.register_blueprint(categoria_bp)
