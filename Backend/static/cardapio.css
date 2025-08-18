@@ -1,0 +1,50 @@
+
+        :root {
+            /* Light Theme */
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --card-bg: #ffffff;
+            --card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            --border-color: #e3e6f0;
+            --hover-color: #f6f6f9;
+
+            /* Dark Theme */
+            --bg-color-dark: #1a1a2e;
+            --text-color-dark: #f8f9fa;
+            --primary-color-dark: #6c63ff;
+            --secondary-color-dark: #20c997;
+            --danger-color-dark: #ff6b6b;
+            --card-bg-dark: #16213e;
+            --card-shadow-dark: 0 0.15rem 1.75rem 0 rgba(0, 0, 0, 0.4);
+            --border-color-dark: #2d3748;
+            --hover-color-dark: #2d3748;
+        }
+        [data-theme="light"] { /* ... */ }
+        [data-theme="dark"] { /* ... */ }
+        * { margin:0; padding:0; box-sizing:border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { font-family:'Segoe UI','Roboto',sans-serif; background-color:var(--bg-color); color:var(--text-color); line-height:1.6; min-height:100vh; padding:20px; }
+        .container { max-width:1200px; margin:0 auto; padding:20px; }
+        h1 { color:var(--primary-color); text-align:center; margin-bottom:20px; font-size:2.5rem; font-weight:600; letter-spacing:0.5px; }
+        .update-time { text-align:center; margin-bottom:30px; font-size:1rem; color:var(--text-color); }
+        .update-time span { color:var(--secondary-color); font-weight:500; }
+        .categoria { background-color:var(--card-bg); border-radius:10px; box-shadow:var(--card-shadow); padding:25px; margin-bottom:30px; border:1px solid var(--border-color); }
+        .categoria-titulo { color:var(--primary-color); font-size:1.8rem; margin-bottom:20px; text-align:center; position:relative; padding-bottom:10px; }
+        .categoria-titulo::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:100px; height:3px; background:linear-gradient(90deg, var(--primary-color), var(--secondary-color)); border-radius:3px; }
+        .status-titulo { display:flex; align-items:center; gap:10px; font-size:1.3rem; margin:25px 0 15px; color:var(--secondary-color); }
+        .status-titulo i { font-size:1.2em; }
+        .status-titulo.indisponivel { color:var(--danger-color); }
+        .produtos-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:15px; margin-bottom:20px; }
+        .produto-card { background-color:var(--card-bg); border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-color); transition: all 0.3s ease; animation: fadeIn 0.5s ease-out; }
+        .produto-card:hover { transform:translateY(-3px); box-shadow:0 5px 15px rgba(0,0,0,0.1); background-color:var(--hover-color); }
+        .produto-nome { font-weight:500; flex:1; }
+        .produto-preco { font-weight:600; color:var(--primary-color); margin-left:10px; white-space:nowrap; }
+        .sem-produtos { grid-column:1 / -1; text-align:center; padding:20px; color:var(--text-color); opacity:0.7; font-style:italic; }
+        .total-produtos { text-align:center; font-size:1.2rem; font-weight:600; color:var(--primary-color); margin-top:30px; padding-top:20px; border-top:1px dashed var(--border-color); }
+        .erro { background-color:rgba(231,74,59,0.1); color:var(--danger-color); padding:15px; border-radius:8px; margin-bottom:30px; border:1px solid var(--danger-color); text-align:center; font-weight:500; }
+        .theme-toggle { position:fixed; bottom:30px; right:30px; width:50px; height:50px; border-radius:50%; background-color:var(--primary-color); color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,0.2); border:none; z-index:100; font-size:1.3rem; transition:all 0.3s ease; }
+        .theme-toggle:hover { transform:scale(1.1); }
+        .theme-toggle:active { transform:scale(0.95); }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }

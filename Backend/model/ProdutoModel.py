@@ -28,7 +28,7 @@ class ProdutoModel(db.Model):
         return {
             'id': self.id,
             'nome': self.nome,
-            'preco': str(self.preco),  # Convert Decimal to string for JSON
+            'preco': float(self.preco) if isinstance(self.preco, Decimal) else self.preco,
             'disponivel': self.disponivel,
             'categoria_id': self.categoria_id,
             'categoria_nome': self.categoria.nome if self.categoria else None

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Organizado</title>
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cardapio.css') }}">
+</head>
+<body data-theme="light">
+    <div class="container">
+        <h1><i class="fas fa-utensils"></i> Cardápio Organizado</h1>
+        <p class="update-time">Atualizado em: <span>{{ dados.atualizado_em }}</span></p>
+
+        {% if dados.erro %}
+    <div class="erro">
+        <i class="fas fa-exclamation-circle"></i> {{ dados.erro }}
+    </div>
+{% else %}
+    {% for cat, produtos in dados.categorias.items() %}
+        <div class="categoria">
+            <h2 class="categoria-titulo">{{ cat }}</h2>
+
+            <h3 class="status-titulo"><i class="fas fa-check-circle"></i> Disponíveis</h3>
+            <div class="produtos-grid">
+                {% if produtos.disponiveis %}
+                    {% for p in produtos.disponiveis %}
+                        <div class="produto-card">
+                            <span class="produto-nome">{{ p.nome }}</span>
+                            <span class="produto-preco">R$ {{ "%.2f"|format(p.preco) }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sem-produtos">Nenhum {{ cat|lower }} disponível</div>
+                {% endif %}
+            </div>
+
+            <h3 class="status-titulo indisponivel"><i class="fas fa-times-circle"></i> Indisponíveis</h3>
+            <div class="produtos-grid">
+                {% if produtos.indisponiveis %}
+                    {% for p in produtos.indisponiveis %}
+                        <div class="produto-card">
+                            <span class="produto-nome">{{ p.nome }}</span>
+                            <span class="produto-preco">R$ {{ "%.2f"|format(p.preco) }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sem-produtos">Nenhum {{ cat|lower }} indisponível</div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+
+    <p class="total-produtos"><i class="fas fa-clipboard-list"></i> Total de produtos: {{ dados.total_produtos }}</p>
+{% endif %}
+
+    </div>
+
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
+        document.body.setAttribute('data-theme', currentTheme);
+        updateThemeIcon(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            themeToggle.style.transform = 'scale(0.9)';
+            setTimeout(() => themeToggle.style.transform = 'scale(1)', 100);
+        });
+
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        prefersDarkScheme.addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.body.setAttribute('data-theme', newTheme);
+                updateThemeIcon(newTheme);
+            }
+        });
+    </script>
+</body>
+</html>

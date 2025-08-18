@@ -1,0 +1,579 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Criação de Produto | Dashboard Neon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cadastro.css') }}">
+    <meta name="color-scheme" content="light dark">
+</head>
+<body data-theme="light">
+    <div class="glow-container animate__animated animate__fadeIn">
+        <div class="container">
+            <div class="header">
+                <h1 id="formTitle">Cadastro de Produto</h1>
+            </div>
+            
+            <div class="form-container">
+                <form id="productForm">
+                    <div class="form-group">
+                        <label for="id">ID:</label>
+                        <input type="number" id="id" name="id" class="form-control" placeholder=" " readonly>
+                        <span class="floating-label">ID (automático)</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nome">Nome do Produto:</label>
+                        <input type="text" id="nome" name="nome" class="form-control" required placeholder=" ">
+                        <span class="floating-label">Obrigatório</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="preco">Preço (R$):</label>
+                        <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
+                        <span class="floating-label">Obrigatório</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Disponibilidade:</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="disponivel" name="disponivel" checked>
+                            <label for="disponivel">Produto disponível para venda</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoria">Categoria:</label>
+                        <input type="text" id="categoria" name="categoria" class="form-control" placeholder=" " inputmode="numeric">
+                        <span class="floating-label">Opcional</span>
+                    </div>
+                    
+                    <button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
+                        <span id="buttonText">Cadastrar Produto</span>
+                    </button>
+
+                    <button type="button" class="btn" onclick="updateProductByName()" id="updateByNameBtn" style="margin-top:10px;">
+                        <span>Atualizar por Nome</span>
+                    </button>
+                
+                    <button type="button" class="btn" onclick="deleteProductByName()" id="deleteByNameBtn" style="margin-top:10px; background: linear-gradient(45deg, var(--danger-color), var(--neon-purple));">
+                        <span>Deletar por Nome</span>
+                    </button>
+                </form>
+                
+                <div id="message" class="message"></div>
+                
+                <div class="output-container" hidden>
+                    <h2>Dados Enviados:</h2>
+                    <div id="jsonOutput">Preencha o formulário para visualizar os dados que serão enviados</div>
+                </div>
+
+                <div class="output-container">
+                    <h2>Produtos Cadastrados:</h2>
+                    <ul id="productNamesList">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <script>
+        // Verifica se o navegador suporta as APIs modernas
+        if (!window.Promise || !window.fetch || !window.URLSearchParams) {
+            document.getElementById('message').textContent = 'Seu navegador é muito antigo. Por favor, atualize para a versão mais recente.';
+            document.getElementById('message').className = 'message error';
+            document.getElementById('message').style.display = 'block';
+            
+            // Desabilita todos os botões
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.disabled = true;
+            });
+        }
+
+       const API_BASE_URL = 'http://127.0.0.1:5000/api';
+        
+        // Verifica se há um ID na URL para carregar os dados do produto
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            if (productId) {
+                loadProduct(productId);
+            }
+
+            // Carrega a lista de produtos cadastrados
+            loadProductNames();
+
+            // Adiciona evento de submit ao formulário para evitar envio padrão
+            document.getElementById('productForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleSubmit();
+            });
+        });
+
+        // Theme Toggle Functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+        const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
+        
+        // Apply the current theme
+        document.body.setAttribute('data-theme', currentTheme);
+        updateThemeIcon(currentTheme);
+        
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            // Add animation
+            themeToggle.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                themeToggle.style.transform = 'scale(1)';
+            }, 100);
+        });
+        
+        // Update theme icon based on current theme
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            icon.setAttribute('aria-hidden', 'true');
+        }
+        
+        // Watch for system theme changes
+        prefersDarkScheme.addEventListener('change', e => {
+            if (!localStorage.getItem('theme')) {
+                const newTheme = e.matches ? 'dark' : 'light';
+                document.body.setAttribute('data-theme', newTheme);
+                updateThemeIcon(newTheme);
+            }
+        });
+
+        // Efeito ripple nos botões
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Verifica se é um dispositivo touch para evitar efeitos indesejados
+                if ('ontouchstart' in window) return;
+                
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple-effect');
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Carrega um produto existente para edição
+        async function loadProduct(productId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/produtos/${productId}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Erro ao carregar produto: ${response.status}`);
+                }
+                
+                const product = await response.json();
+                
+                // Preenche o formulário com os dados do produto
+                document.getElementById('id').value = product.id;
+                document.getElementById('nome').value = product.nome;
+                document.getElementById('preco').value = product.preco;
+                document.getElementById('disponivel').checked = product.disponivel;
+                document.getElementById('categoria').value = product.categoria?.id || '';
+                
+                // Atualiza a interface para modo de edição
+                document.getElementById('formTitle').textContent = 'Edição de Produto';
+                document.getElementById('buttonText').textContent = 'Atualizar Produto';
+                document.getElementById('id').readOnly = true;
+                
+                // Mostra os dados no JSON de saída
+                document.getElementById('jsonOutput').textContent = JSON.stringify(product, null, 2);
+                
+            } catch (error) {
+                showMessage(`✖ Erro ao carregar produto: ${error.message}`, false);
+                console.error('Erro detalhado:', error);
+            }
+        }
+
+        async function loadProductNames() {
+    const list = document.getElementById('productNamesList');
+    list.innerHTML = '<li class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando...</li>'; 
+    
+    try {
+        // Corrigindo a sintaxe do fetch (objeto de configuração deve estar dentro das chaves)
+        const response = await fetch(`${API_BASE_URL}/produtos`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        const produtos = await response.json();
+        
+        if (produtos.length === 0) {
+            list.innerHTML = '<li>Nenhum produto cadastrado.</li>';
+        } else {
+            list.innerHTML = '';
+            produtos.forEach(produto => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${produto.nome}</span>
+                    <span>R$ ${produto.preco?.toFixed(2) || '0.00'}</span>
+                    <span class="${produto.disponivel ? 'categoria-verde' : 'categoria-vermelho'}">
+                        ${produto.disponivel ? 'Disponível' : 'Indisponível'}
+                    </span>
+                `;
+                list.appendChild(li);
+            });
+        }
+    } catch (error) {
+        console.error('Erro detalhado:', error);
+        list.innerHTML = '<li>Erro ao carregar produtos.</li>';
+        showMessage(`✖ Erro ao carregar produtos: ${error.message}`, false);
+    }
+}
+
+        function showMessage(text, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = isSuccess ? 'message success' : 'message error';
+            messageDiv.style.display = 'block';
+            
+            // Adiciona animação
+            messageDiv.classList.add('animate__animated', 'animate__fadeIn');
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Decide se é POST (criação) ou PUT (atualização)
+        function handleSubmit() {
+            const productId = document.getElementById('id').value;
+            if (productId) {
+                updateProduct(productId);
+            } else {
+                submitForm();
+            }
+        }
+        
+        // Cria um novo produto (POST)
+        async function submitForm() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Enviando... ✨</span>';
+            
+            try {
+                // Coletar dados do formulário
+                const product = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    disponivel: document.getElementById('disponivel').checked,
+                    categoria: {
+                        id: document.getElementById('categoria').value.trim() ? 
+                            parseInt(document.getElementById('categoria').value.trim()) : null
+                    }
+                };
+
+                // Validações
+                if (!product.nome || product.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                
+                if (isNaN(product.preco) || product.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+
+                document.getElementById('jsonOutput').textContent = JSON.stringify(product, null, 2);
+
+                const response = await fetch(`${API_BASE_URL}/produtos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                });
+                
+                if (!response.ok) {
+                    let errorMessage = `Erro HTTP: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${await response.text()}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                showMessage('✔ Produto cadastrado com sucesso! ID: ' + (data.id || 'Novo'), true);
+                console.log('Resposta da API:', data);
+
+                // Limpa o formulário após sucesso
+                document.getElementById('productForm').reset();
+                
+                // Efeito visual de confirmação
+                document.querySelector('.glow-container').style.animation = 'glow 0.5s 3 alternate';
+                
+                // Atualiza a lista de produtos cadastrados
+                loadProductNames();
+                
+            } catch (error) {
+                showMessage(`✖ Falha ao cadastrar: ${error.message}`, false);
+                console.error('Erro detalhado:', error);
+                
+                // Efeito visual de erro
+                const glow = document.querySelector('.glow-container');
+                glow.style.boxShadow = '0 0 20px rgba(255, 0, 106, 0.7)';
+                setTimeout(() => {
+                    glow.style.boxShadow = '';
+                }, 1000);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span id="buttonText">Cadastrar Produto</span>';
+            }
+        }
+
+        // Atualiza um produto existente (PUT)
+        async function updateProduct(productId) {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Atualizando... 🔄</span>';
+            
+            try {
+                // Coletar dados do formulário
+                const product = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    disponivel: document.getElementById('disponivel').checked,
+                    categoria: {
+                        id: document.getElementById('categoria').value.trim() ? 
+                            parseInt(document.getElementById('categoria').value.trim()) : null
+                    }
+                };
+
+                // Validações
+                if (!product.nome || product.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                
+                if (isNaN(product.preco) || product.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+
+                document.getElementById('jsonOutput').textContent = JSON.stringify(product, null, 2);
+                
+                const response = await fetch(`${API_BASE_URL}/produtos/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                });
+                
+                if (!response.ok) {
+                    let errorMessage = `Erro HTTP: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${await response.text()}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                showMessage('✔ Produto atualizado com sucesso!', true);
+                console.log('Resposta da API:', data);
+                
+                // Efeito visual de confirmação
+                document.querySelector('.glow-container').style.animation = 'glow 0.5s 3 alternate';
+                
+                // Atualiza a lista de produtos cadastrados
+                loadProductNames();
+                
+            } catch (error) {
+                showMessage(`✖ Falha ao atualizar: ${error.message}`, false);
+                console.error('Erro detalhado:', error);
+                
+                // Efeito visual de erro
+                const glow = document.querySelector('.glow-container');
+                glow.style.boxShadow = '0 0 20px rgba(255, 0, 106, 0.7)';
+                setTimeout(() => {
+                    glow.style.boxShadow = '';
+                }, 1000);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span id="buttonText">Atualizar Produto</span>';
+            }
+        }
+
+        /**
+         * Atualiza um produto via PUT na API, buscando pelo nome.
+         */
+        async function updateProductByName() {
+            const btn = document.getElementById('updateByNameBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Atualizando... 🔄</span>';
+
+            try {
+                // Coletar dados do formulário
+                const nome = document.getElementById('nome').value.trim();
+                const product = {
+                    nome: nome,
+                    preco: parseFloat(document.getElementById('preco').value),
+                    disponivel: document.getElementById('disponivel').checked,
+                    categoria: {
+                        id: document.getElementById('categoria').value.trim() ? 
+                            parseInt(document.getElementById('categoria').value.trim()) : null
+                    }
+                };
+
+                // Validações
+                if (!product.nome || product.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                if (isNaN(product.preco) || product.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+
+                document.getElementById('jsonOutput').textContent = JSON.stringify(product, null, 2);
+
+                // PUT usando o nome na URL
+                const response = await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(product)
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Erro HTTP: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${await response.text()}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                showMessage('✔ Produto atualizado pelo nome com sucesso!', true);
+                console.log('Resposta da API:', data);
+
+                // Efeito visual de confirmação
+                document.querySelector('.glow-container').style.animation = 'glow 0.5s 3 alternate';
+
+            } catch (error) {
+                showMessage(`✖ Falha ao atualizar por nome: ${error.message}`, false);
+                console.error('Erro detalhado:', error);
+
+                // Efeito visual de erro
+                const glow = document.querySelector('.glow-container');
+                glow.style.boxShadow = '0 0 20px rgba(255, 0, 106, 0.7)';
+                setTimeout(() => {
+                    glow.style.boxShadow = '';
+                }, 1000);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Atualizar por Nome</span>';
+            }
+        }
+
+        /**
+         * Deleta um produto pelo nome.
+         */
+        async function deleteProductByName() {
+            const btn = document.getElementById('deleteByNameBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Deletando... 🗑️</span>';
+
+            try {
+                const nome = document.getElementById('nome').value.trim();
+                if (!nome) throw new Error('Informe o nome do produto para deletar.');
+
+                if (!confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Deletar por Nome</span>';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/produtos/${encodeURIComponent(nome)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Erro HTTP: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                    } catch (e) {
+                        errorMessage += ` - ${await response.text()}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                showMessage('✔ Produto deletado pelo nome com sucesso!', true);
+                document.getElementById('productForm').reset();
+                loadProductNames();
+
+                // Efeito visual de confirmação
+                document.querySelector('.glow-container').style.animation = 'glow 0.5s 3 alternate';
+
+            } catch (error) {
+                showMessage(`✖ Falha ao deletar por nome: ${error.message}`, false);
+                console.error('Erro detalhado:', error);
+
+                // Efeito visual de erro
+                const glow = document.querySelector('.glow-container');
+                glow.style.boxShadow = '0 0 20px rgba(255, 0, 106, 0.7)';
+                setTimeout(() => {
+                    glow.style.boxShadow = '';
+                }, 1000);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Deletar por Nome</span>';
+            }
+        }
+    </script>
+</body>
+</html>

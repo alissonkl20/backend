@@ -1,10 +1,11 @@
-from flask import Blueprint, request, jsonify, abort
+from flask import Blueprint, request, jsonify, abort, render_template
 from http import HTTPStatus
 from decimal import Decimal
 from model.ProdutoModel import ProdutoModel
 from extensions import db
 from model.CategoriaModel import CategoriaModel
 from repository.ProdutoRepository import ProdutoRepository
+from datetime import datetime
 
 produto_bp = Blueprint('produtos', __name__, url_prefix='/api/produtos')
 repo = ProdutoRepository()
@@ -18,7 +19,6 @@ def listar_produtos():
 def criar_produto():
     data = request.get_json()
     
-    # Adaptado para receber tanto categoria_id quanto categoria.id
     categoria_id = data.get('categoria_id') or (data.get('categoria', {}).get('id'))
     
     if not all([data.get('nome'), data.get('preco'), categoria_id]):
@@ -95,7 +95,6 @@ def deletar_produto(id):
         db.session.rollback()
         abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(e))
 
-# Novos endpoints para trabalhar com nomes
 @produto_bp.route('/nome/<string:nome>', methods=['PUT'])
 def atualizar_produto_por_nome(nome):
     produto = ProdutoModel.query.filter_by(nome=nome).first()
@@ -138,3 +137,38 @@ def deletar_produto_por_nome(nome):
     except Exception as e:
         db.session.rollback()
         abort(HTTPStatus.INTERNAL_SERVER_ERROR, description=str(e))
+
+
+def get_cardapio_data() -> dict[str, any]:
+    try:
+        produtos: list[ProdutoModel] = repo.find_all()
+        categorias = {}
+        total_produtos = 0
+
+        for produto in produtos:
+            nome_cat = produto.categoria.nome  # pega exatamente do banco
+            if nome_cat not in categorias:
+                categorias[nome_cat] = {'disponiveis': [], 'indisponiveis': []}
+
+            item = {'nome': produto.nome, 'preco': produto.preco}
+            if produto.disponivel:
+                categorias[nome_cat]['disponiveis'].append(item)
+            else:
+                categorias[nome_cat]['indisponiveis'].append(item)
+
+            total_produtos += 1
+
+        return {
+            'atualizado_em': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+            'categorias': categorias,
+            'total_produtos': total_produtos,
+            'erro': None
+        }
+
+    except Exception as e:
+        return {
+            'atualizado_em': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+            'categorias': {},
+            'total_produtos': 0,
+            'erro': f'Erro ao carregar cardápio: {str(e)}'
+        }
