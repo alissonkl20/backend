@@ -41,7 +41,7 @@ def create_app():
 
     return app
 
-# **Cria a variável global 'app' que o Gunicorn precisa**
+# Variável global 'app' que o Gunicorn procura
 app = create_app()
 
 if __name__ == "__main__":
