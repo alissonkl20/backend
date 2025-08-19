@@ -10,23 +10,25 @@ from controller.CategoriaController import categoria_bp
 from controller.ProdutoController import produto_bp, get_cardapio_data
 from extensions import db
 
+# Importe seus modelos PARA FORÇAR A CRIAÇÃO
+from model.ProdutoModel import ProdutoModel
+from model.CategoriaModel import CategoriaModel
+
 # Carrega variáveis do .env apenas em desenvolvimento
-if os.environ.get('RENDER') is None:  # Só carrega .env se não estiver no Render
+if os.environ.get('RENDER') is None:
     env_path = Path(__file__).parent / '.env'
     load_dotenv(dotenv_path=env_path, override=True)
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
 
-    # Configuração do banco para Render - CORRIGIDO
+    # Configurações do banco
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
-        # Corrige a URL para SQLAlchemy (Render usa postgres://, SQLAlchemy precisa postgresql://)
         if database_url.startswith('postgres://'):
             database_url = database_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     else:
-        # Fallback para desenvolvimento
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -35,6 +37,11 @@ def create_app():
     db.init_app(app)
     CORS(app)
     Migrate(app, db)
+
+    # CRIA TABELAS AUTOMATICAMENTE
+    with app.app_context():
+        db.create_all()
+        print("✅ Tabelas criadas/com verificadas!")
 
     # Registra blueprints
     app.register_blueprint(categoria_bp)
@@ -56,5 +63,4 @@ def create_app():
 
     return app
 
-# Gunicorn espera a variável "app" no módulo
 app = create_app()
