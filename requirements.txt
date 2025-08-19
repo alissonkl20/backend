@@ -5,3 +5,4 @@ flask-cors==6.0.1
 python-dotenv==1.1.1
 psycopg2-binary==2.9.9
 flask-cors==6.0.1
+flask-migrate==4.0.4
