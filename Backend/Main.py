@@ -32,7 +32,7 @@ def create_app():
 
     @app.route('/cardapio')
     def cardapio_html():
-        dashboard = get_cardapio_data()  # OK dentro da rota
+        dashboard = get_cardapio_data()
         return render_template('cardapio.html', dados=dashboard)
 
     @app.route('/cadastro')
@@ -41,6 +41,9 @@ def create_app():
 
     return app
 
-    if __name__ == "__main__":
-     app = create_app()
+# **Cria a variável global 'app' que o Gunicorn precisa**
+app = create_app()
+
+if __name__ == "__main__":
+    # Executa localmente
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
