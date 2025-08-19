@@ -1,31 +1,46 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template
 from flask_cors import CORS
-from dotenv import load_dotenv
-from pathlib import Path
 from flask_migrate import Migrate
-from extensions import db
+from dotenv import load_dotenv
 import os
+from pathlib import Path
+
+# Importe os blueprints
 from controller.CategoriaController import categoria_bp
 from controller.ProdutoController import produto_bp, get_cardapio_data
-from datetime import datetime
+from extensions import db
 
-# Configuração do .env
-env_path = Path(__file__).parent / '.env'
-load_dotenv(dotenv_path=env_path, override=True)
+# Carrega variáveis do .env apenas em desenvolvimento
+if os.environ.get('RENDER') is None:  # Só carrega .env se não estiver no Render
+    env_path = Path(__file__).parent / '.env'
+    load_dotenv(dotenv_path=env_path, override=True)
 
 def create_app():
     app = Flask(__name__, template_folder='templates')
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    # Configuração do banco para Render - CORRIGIDO
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Corrige a URL para SQLAlchemy (Render usa postgres://, SQLAlchemy precisa postgresql://)
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        # Fallback para desenvolvimento
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # Inicializa extensões
     db.init_app(app)
     CORS(app)
     Migrate(app, db)
 
+    # Registra blueprints
     app.register_blueprint(categoria_bp)
     app.register_blueprint(produto_bp)
 
+    # Rotas
     @app.route('/')
     def dashboard():
         return render_template('dashboard.html')
@@ -41,9 +56,5 @@ def create_app():
 
     return app
 
-# Variável global 'app' que o Gunicorn procura
+# Gunicorn espera a variável "app" no módulo
 app = create_app()
-
-if __name__ == "__main__":
-    # Executa localmente
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
