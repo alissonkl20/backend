@@ -3,7 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pathlib import Path
 from flask_migrate import Migrate
-from extensions import db
+from Backend.extensions import db
 import os
 from controller.CategoriaController import categoria_bp
 from controller.ProdutoController import produto_bp, get_cardapio_data
