@@ -12,76 +12,347 @@
 </head>
 <body data-theme="light">
 <div class="glow-container animate__animated animate__fadeIn">
-<div class="container">
-<div class="header">
-<h1 id="formTitle">Cadastro de Produto</h1>
+  <div class="container">
+    <div class="header">
+      <h1 id="formTitle">Cadastro de Produto</h1>
+    </div>
+    <div class="form-container">
+      <form id="productForm">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="number" id="id" name="id" class="form-control" placeholder=" " readonly>
+          <span class="floating-label">ID (automático)</span>
+        </div>
+        <div class="form-group">
+          <label for="nome">Nome do Produto:</label>
+          <input type="text" id="nome" name="nome" class="form-control" required placeholder=" ">
+          <span class="floating-label">Obrigatório</span>
+        </div>
+        <div class="form-group">
+          <label for="preco">Preço (R$):</label>
+          <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
+          <span class="floating-label">Obrigatório</span>
+        </div>
+        <div class="form-group">
+          <label>Disponibilidade:</label>
+          <div class="checkbox-group">
+            <input type="checkbox" id="disponivel" name="disponivel" checked>
+            <label for="disponivel">Produto disponível para venda</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="categoria">Categoria:</label>
+          <select id="categoria" name="categoria" class="form-control">
+            <option value="">Selecione uma categoria</option>
+            <option value="2">Doces</option>
+            <option value="3">Salgados</option>
+            <option value="4">Pães</option>
+            <option value="5">Bolos</option>
+            <option value="6">Tortas</option>
+            <option value="7">Mousses</option>
+          </select>
+          <span class="floating-label">Opcional</span>
+        </div>
+        <div class="button-group">
+          <button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
+            <span id="buttonText">Cadastrar Produto</span>
+          </button>
+          <button type="button" class="btn" onclick="updateProductByName()" id="updateByNameBtn">
+            <span>Atualizar por Nome</span>
+          </button>
+          <button type="button" class="btn btn-danger" onclick="deleteProductByName()" id="deleteByNameBtn">
+            <span>Deletar por Nome</span>
+          </button>
+        </div>
+      </form>
+      <div id="message" class="message"></div>
+      <div class="output-container" hidden>
+        <h2>Dados Enviados:</h2>
+        <div id="jsonOutput">Preencha o formulário para visualizar os dados que serão enviados</div>
+      </div>
+      <div class="output-container">
+        <h2>Cardápio por Categorias:</h2>
+        <div id="productCategoriesList"></div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="form-container">
-<form id="productForm">
-<div class="form-group">
-<label for="id">ID:</label>
-<input type="number" id="id" name="id" class="form-control" placeholder=" " readonly>
-<span class="floating-label">ID (automático)</span>
-</div>
-<div class="form-group">
-<label for="nome">Nome do Produto:</label>
-<input type="text" id="nome" name="nome" class="form-control" required placeholder=" ">
-<span class="floating-label">Obrigatório</span>
-</div>
-<div class="form-group">
-<label for="preco">Preço (R$):</label>
-<input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
-<span class="floating-label">Obrigatório</span>
-</div>
-<div class="form-group">
-<label>Disponibilidade:</label>
-<div class="checkbox-group">
-<input type="checkbox" id="disponivel" name="disponivel" checked>
-<label for="disponivel">Produto disponível para venda</label>
-</div>
-</div>
-<div class="form-group">
-<label for="categoria">Categoria:</label>
-<select id="categoria" name="categoria" class="form-control">
-<option value="">Selecione uma categoria</option>
-<option value="2">Doces</option>
-<option value="3">Salgados</option>
-<option value="4">Pães</option>
-<option value="5">Bolos</option>
-<option value="6">Tortas</option>
-<option value="7">Mousses</option>
-</select>
-<span class="floating-label">Opcional</span>
-</div>
-<div class="button-group">
-<button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
-<span id="buttonText">Cadastrar Produto</span>
-</button>
-<button type="button" class="btn" onclick="updateProductByName()" id="updateByNameBtn">
-<span>Atualizar por Nome</span>
-</button>
-<button type="button" class="btn btn-danger" onclick="deleteProductByName()" id="deleteByNameBtn">
-<span>Deletar por Nome</span>
-</button>
-</div>
-</form>
-<div id="message" class="message"></div>
-<div class="output-container" hidden>
-<h2>Dados Enviados:</h2>
-<div id="jsonOutput">Preencha o formulário para visualizar os dados que serão enviados</div>
-</div>
-<div class="output-container">
-<h2>Cardápio por Categorias:</h2>
-<div id="productCategoriesList"></div>
-</div>
-</div>
-</div>
-</div>
+
+<!-- Botão Dark/Light -->
 <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-<i class="fas fa-moon"></i>
+  <i class="fas fa-moon"></i>
 </button>
+
 <script>
-const API_BASE_URL = window.location.origin + '/api';const CATEGORIAS={2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"};document.addEventListener('DOMContentLoaded',function(){const e=new URLSearchParams(window.location.search);e.get('id')&&loadProduct(e.get('id')),loadProductCategories(),document.getElementById('productForm').addEventListener('submit',function(e){e.preventDefault(),handleSubmit()})});const themeToggle=document.getElementById('themeToggle'),prefersDarkScheme=window.matchMedia('(prefers-color-scheme: dark)'),currentTheme=localStorage.getItem('theme')||(prefersDarkScheme.matches?'dark':'light');document.body.setAttribute('data-theme',currentTheme),updateThemeIcon(currentTheme),themeToggle.addEventListener('click',()=>{const e=document.body.getAttribute('data-theme'),t='light'===e?'dark':'light';document.body.setAttribute('data-theme',t),localStorage.setItem('theme',t),updateThemeIcon(t),themeToggle.style.transform='scale(0.9)',setTimeout(()=>{themeToggle.style.transform='scale(1)'},100)}),prefersDarkScheme.addEventListener('change',e=>{localStorage.getItem('theme')||(document.body.setAttribute('data-theme',e.matches?'dark':'light'),updateThemeIcon(e.matches?'dark':'light'))});function updateThemeIcon(e){const t=themeToggle.querySelector('i');t.className='light'===e?'fas fa-moon':'fas fa-sun',t.setAttribute('aria-hidden','true')}document.querySelectorAll('.btn').forEach(e=>{e.addEventListener('click',function(t){if(!('ontouchstart'in window)){const e=this.getBoundingClientRect(),n=document.createElement('span');n.classList.add('ripple-effect'),n.style.left=`${t.clientX-e.left}px`,n.style.top=`${t.clientY-e.top}px`,this.appendChild(n),setTimeout(()=>{n.remove()},600)}})});async function loadProduct(e){try{const t=await fetch(`${API_BASE_URL}/produtos/${e}`,{headers:{'Content-Type':'application/json','Accept':'application/json'}});if(!t.ok)throw new Error(`Erro ao carregar produto: ${t.status}`);const n=await t.json();document.getElementById('id').value=n.id,document.getElementById('nome').value=n.nome,document.getElementById('preco').value=n.preco,document.getElementById('disponivel').checked=n.disponivel,document.getElementById('categoria').value=n.categoria?.id||'',document.getElementById('formTitle').textContent='Edição de Produto',document.getElementById('buttonText').textContent='Atualizar Produto',document.getElementById('id').readOnly=!0,document.getElementById('jsonOutput').textContent=JSON.stringify(n,null,2)}catch(e){showMessage(`✖ Erro ao carregar produto: ${e.message}`,!1),console.error('Erro detalhado:',e)}}async function loadProductCategories(){const e=document.getElementById('productCategoriesList');e.innerHTML='<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';try{const t=await fetch(`${API_BASE_URL}/produtos`);if(!t.ok)throw new Error(`Erro ao carregar produtos: ${t.status}`);const n=await t.json();if(0===n.length)return void(e.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>');const o={};n.forEach(e=>{const t=e.categoria?.id||'sem-categoria',n=CATEGORIAS[t]||'Outros';o[n]||(o[n]=[]),o[n].push(e)});const r=Object.keys(o).sort();e.innerHTML='',r.forEach(t=>{const n=document.createElement('div');n.className='category-container';const r=document.createElement('div');r.className='category-header',r.innerHTML=`${t}<i class="fas fa-chevron-down"></i>`;const a=document.createElement('ul');a.className='product-list',o[t].forEach(e=>{const t=document.createElement('li');t.className='product-item',t.innerHTML=`<span class="product-name">${e.nome}</span><span class="product-price">R$ ${e.preco.toFixed(2)}</span><span class="product-status ${e.disponivel?'status-available':'status-unavailable'}">${e.disponivel?'Disponível':'Indisponível'}</span>`,a.appendChild(t)}),r.addEventListener('click',function(){this.classList.toggle('collapsed'),a.classList.toggle('collapsed')}),n.appendChild(r),n.appendChild(a),e.appendChild(n)})}catch(e){e.innerHTML='<div class="error-state"><i class="fas fa-exclamation-circle"></i> Erro ao carregar cardápio</div>',console.error('Erro ao carregar produtos:',e)}}function showMessage(e,t){const n=document.getElementById('message');n.textContent=e,n.className=t?'message success':'message error',n.style.display='block',n.classList.add('animate__animated','animate__fadeIn'),setTimeout(()=>{n.style.display='none'},5e3)}function handleSubmit(){const e=document.getElementById('id').value;e?updateProduct(e):submitForm()}async function submitForm(){const e=document.getElementById('submitBtn');e.disabled=!0,e.innerHTML='<span>Enviando... ✨</span>';try{const t={nome:document.getElementById('nome').value.trim(),preco:parseFloat(document.getElementById('preco').value),disponivel:document.getElementById('disponivel').checked,categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}};if(!t.nome||t.nome.length<2)throw new Error('Nome do produto deve ter pelo menos 2 caracteres');if(isNaN(t.preco)||t.preco<=0)throw new Error('Preço deve ser um número positivo');document.getElementById('jsonOutput').textContent=JSON.stringify(t,null,2);const n=await fetch(`${API_BASE_URL}/produtos`,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(t)});if(!n.ok){const errorText=await n.text();throw new Error(`Erro do servidor (${n.status}): ${errorText}`)}const o=await n.json();showMessage('✔ Produto cadastrado com sucesso! ID: '+(o.id||'Novo'),!0),console.log('Resposta da API:',o),document.getElementById('productForm').reset(),document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate',loadProductCategories()}catch(e){showMessage(`✖ Falha ao cadastrar: ${e.message}`,!1),console.error('Erro detalhado:',e);const t=document.querySelector('.glow-container');t.style.boxShadow='0 0 20px rgba(255, 0, 106, 0.7)',setTimeout(()=>{t.style.boxShadow=''},1e3)}finally{e.disabled=!1,e.innerHTML='<span id="buttonText">Cadastrar Produto</span>'}}async function updateProduct(e){const t=document.getElementById('submitBtn');t.disabled=!0,t.innerHTML='<span>Atualizando... 🔄</span>';try{const n={nome:document.getElementById('nome').value.trim(),preco:parseFloat(document.getElementById('preco').value),disponivel:document.getElementById('disponivel').checked,categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}};if(!n.nome||n.nome.length<2)throw new Error('Nome do produto deve ter pelo menos 2 caracteres');if(isNaN(n.preco)||n.preco<=0)throw new Error('Preço deve ser um número positivo');document.getElementById('jsonOutput').textContent=JSON.stringify(n,null,2);const o=await fetch(`${API_BASE_URL}/produtos/${e}`,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(n)});if(!o.ok){const errorText=await o.text();throw new Error(`Erro do servidor (${o.status}): ${errorText}`)}const r=await o.json();showMessage('✔ Produto atualizado com sucesso!',!0),console.log('Resposta da API:',r),document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate',loadProductCategories()}catch(e){showMessage(`✖ Falha ao atualizar: ${e.message}`,!1),console.error('Erro detalhado:',e);const n=document.querySelector('.glow-container');n.style.boxShadow='0 0 20px rgba(255, 0, 106, 0.7)',setTimeout(()=>{n.style.boxShadow=''},1e3)}finally{t.disabled=!1,t.innerHTML='<span id="buttonText">Atualizar Produto</span>'}}async function updateProductByName(){const e=document.getElementById('updateByNameBtn');e.disabled=!0,e.innerHTML='<span>Atualizando... 🔄</span>';try{const t=document.getElementById('nome').value.trim(),n={nome:t,preco:parseFloat(document.getElementById('preco').value),disponivel:document.getElementById('disponivel').checked,categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}};if(!n.nome||n.nome.length<2)throw new Error('Nome do produto deve ter pelo menos 2 caracteres');if(isNaN(n.preco)||n.preco<=0)throw new Error('Preço deve ser um número positivo');document.getElementById('jsonOutput').textContent=JSON.stringify(n,null,2);const o=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(t)}`,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(n)});if(!o.ok){const errorText=await o.text();throw new Error(`Erro do servidor (${o.status}): ${errorText}`)}const r=await o.json();showMessage('✔ Produto atualizado pelo nome com sucesso!',!0),console.log('Resposta da API:',r),document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate',loadProductCategories()}catch(e){showMessage(`✖ Falha ao atualizar por nome: ${e.message}`,!1),console.error('Erro detalhado:',e);const t=document.querySelector('.glow-container');t.style.boxShadow='0 0 20px rgba(255, 0, 106, 0.7)',setTimeout(()=>{t.style.boxShadow=''},1e3)}finally{e.disabled=!1,e.innerHTML='<span>Atualizar por Nome</span>'}}async function deleteProductByName(){const e=document.getElementById('deleteByNameBtn');e.disabled=!0,e.innerHTML='<span>Deletando... 🗑️</span>';try{const t=document.getElementById('nome').value.trim();if(!t)throw new Error('Informe o nome do produto para deletar.');if(!confirm(`Tem certeza que deseja excluir o produto "${t}"?`))return void(e.disabled=!1,e.innerHTML='<span>Deletar por Nome</span>');const n=await fetch(`${API_BASE_URL}/produtos/${encodeURIComponent(t)}`,{method:'DELETE',headers:{'Content-Type':'application/json','Accept':'application/json'}});if(!n.ok){const errorText=await n.text();throw new Error(`Erro do servidor (${n.status}): ${errorText}`)}showMessage('✔ Produto deletado pelo nome com sucesso!',!0),document.getElementById('productForm').reset(),loadProductCategories(),document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate'}catch(e){showMessage(`✖ Falha ao deletar por nome: ${e.message}`,!1),console.error('Erro detalhado:',e);const t=document.querySelector('.glow-container');t.style.boxShadow='0 0 20px rgba(255, 0, 106, 0.7)',setTimeout(()=>{t.style.boxShadow=''},1e3)}finally{e.disabled=!1,e.innerHTML='<span>Deletar por Nome</span>'}}
+const API_BASE_URL = window.location.origin + '/api';
+const CATEGORIAS = {
+  2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"
+};
+
+// ---------------------- Inicialização ----------------------
+document.addEventListener('DOMContentLoaded', function(){
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('id')) loadProduct(params.get('id'));
+  loadProductCategories();
+
+  document.getElementById('productForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    handleSubmit();
+  });
+});
+
+// ---------------------- Tema ----------------------
+const themeToggle = document.getElementById('themeToggle'),
+      prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)'),
+      currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark':'light');
+document.body.setAttribute('data-theme', currentTheme);
+updateThemeIcon(currentTheme);
+
+themeToggle.addEventListener('click', () => {
+  const current = document.body.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeIcon(next);
+  themeToggle.style.transform = 'scale(0.9)';
+  setTimeout(()=> themeToggle.style.transform='scale(1)',100);
+});
+
+prefersDarkScheme.addEventListener('change', e => {
+  if(!localStorage.getItem('theme')){
+    document.body.setAttribute('data-theme', e.matches?'dark':'light');
+    updateThemeIcon(e.matches?'dark':'light');
+  }
+});
+
+function updateThemeIcon(theme){
+  const icon = themeToggle.querySelector('i');
+  icon.className = theme==='light' ? 'fas fa-moon' : 'fas fa-sun';
+  icon.setAttribute('aria-hidden','true');
+}
+
+// ---------------------- Botão ripple effect ----------------------
+document.querySelectorAll('.btn').forEach(btn=>{
+  btn.addEventListener('click', function(ev){
+    if(!('ontouchstart' in window)){
+      const rect = this.getBoundingClientRect(),
+            ripple = document.createElement('span');
+      ripple.classList.add('ripple-effect');
+      ripple.style.left = `${ev.clientX - rect.left}px`;
+      ripple.style.top = `${ev.clientY - rect.top}px`;
+      this.appendChild(ripple);
+      setTimeout(()=> ripple.remove(),600);
+    }
+  });
+});
+
+// ---------------------- Funções API ----------------------
+async function loadProduct(id){
+  try{
+    const resp = await fetch(`${API_BASE_URL}/produtos/${id}`,{
+      headers:{'Content-Type':'application/json','Accept':'application/json'}
+    });
+    if(!resp.ok) throw new Error(`Erro ao carregar produto: ${resp.status}`);
+    const data = await resp.json();
+    document.getElementById('id').value = data.id;
+    document.getElementById('nome').value = data.nome;
+    document.getElementById('preco').value = data.preco;
+    document.getElementById('disponivel').checked = data.disponivel;
+    document.getElementById('categoria').value = data.categoria?.id || '';
+    document.getElementById('formTitle').textContent='Edição de Produto';
+    document.getElementById('buttonText').textContent='Atualizar Produto';
+    document.getElementById('id').readOnly = true;
+    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
+  }catch(err){
+    showMessage(`✖ Erro ao carregar produto: ${err.message}`, false);
+    console.error(err);
+  }
+}
+
+async function loadProductCategories(){
+  const list = document.getElementById('productCategoriesList');
+  list.innerHTML='<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
+  try{
+    const resp = await fetch(`${API_BASE_URL}/produtos`);
+    if(!resp.ok) throw new Error(`Erro ao carregar produtos: ${resp.status}`);
+    const produtos = await resp.json();
+    if(produtos.length===0){
+      list.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>';
+      return;
+    }
+    const agrupado={};
+    produtos.forEach(p=>{
+      const idCat=p.categoria?.id || 'sem-categoria';
+      const nomeCat=CATEGORIAS[idCat] || 'Outros';
+      if(!agrupado[nomeCat]) agrupado[nomeCat]=[];
+      agrupado[nomeCat].push(p);
+    });
+
+    const categorias = Object.keys(agrupado).sort();
+    list.innerHTML='';
+    categorias.forEach(cat=>{
+      const div=document.createElement('div');
+      div.className='category-container';
+      const header=document.createElement('div');
+      header.className='category-header';
+      header.innerHTML=`${cat}<i class="fas fa-chevron-down"></i>`;
+      const ul=document.createElement('ul');
+      ul.className='product-list';
+      agrupado[cat].forEach(p=>{
+        const li=document.createElement('li');
+        li.className='product-item';
+        li.innerHTML=`<span class="product-name">${p.nome}</span>
+                      <span class="product-price">R$ ${p.preco.toFixed(2)}</span>
+                      <span class="product-status ${p.disponivel?'status-available':'status-unavailable'}">${p.disponivel?'Disponível':'Indisponível'}</span>`;
+        ul.appendChild(li);
+      });
+      header.addEventListener('click',()=>{header.classList.toggle('collapsed');ul.classList.toggle('collapsed')});
+      div.appendChild(header);
+      div.appendChild(ul);
+      list.appendChild(div);
+    });
+  }catch(err){
+    list.innerHTML='<div class="error-state"><i class="fas fa-exclamation-circle"></i> Erro ao carregar cardápio</div>';
+    console.error(err);
+  }
+}
+
+// ---------------------- Helpers ----------------------
+function showMessage(text, success){
+  const msg=document.getElementById('message');
+  msg.textContent=text;
+  msg.className=success?'message success':'message error';
+  msg.style.display='block';
+  msg.classList.add('animate__animated','animate__fadeIn');
+  setTimeout(()=> msg.style.display='none',5000);
+}
+
+function handleSubmit(){
+  const id=document.getElementById('id').value;
+  id ? updateProduct(id) : submitForm();
+}
+
+// ---------------------- Cadastrar ----------------------
+async function submitForm(){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.innerHTML='<span>Enviando... ✨</span>';
+  try{
+    const data={
+      nome:document.getElementById('nome').value.trim(),
+      preco:parseFloat(document.getElementById('preco').value),
+      disponivel:document.getElementById('disponivel').checked,
+      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
+    };
+    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+
+    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
+
+    const resp=await fetch(`${API_BASE_URL}/produtos`,{
+      method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
+    });
+    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    const result=await resp.json();
+    showMessage('✔ Produto cadastrado com sucesso! ID: '+(result.id||'Novo'),true);
+    document.getElementById('productForm').reset();
+    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
+    loadProductCategories();
+  }catch(err){
+    showMessage(`✖ Falha ao cadastrar: ${err.message}`,false);
+    console.error(err);
+  }finally{
+    btn.disabled=false; btn.innerHTML='<span id="buttonText">Cadastrar Produto</span>';
+  }
+}
+
+// ---------------------- Atualizar por ID ----------------------
+async function updateProduct(id){
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
+  try{
+    const data={
+      nome:document.getElementById('nome').value.trim(),
+      preco:parseFloat(document.getElementById('preco').value),
+      disponivel:document.getElementById('disponivel').checked,
+      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
+    };
+    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
+
+    const resp=await fetch(`${API_BASE_URL}/produtos/${id}`,{
+      method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
+    });
+    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    showMessage('✔ Produto atualizado com sucesso!',true);
+    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
+    loadProductCategories();
+  }catch(err){
+    showMessage(`✖ Falha ao atualizar: ${err.message}`,false);
+    console.error(err);
+  }finally{
+    btn.disabled=false; btn.innerHTML='<span id="buttonText">Atualizar Produto</span>';
+  }
+}
+
+// ---------------------- Atualizar por Nome ----------------------
+async function updateProductByName(){
+  const btn=document.getElementById('updateByNameBtn');
+  btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
+  try{
+    const nome=document.getElementById('nome').value.trim();
+    const data={
+      nome:nome,
+      preco:parseFloat(document.getElementById('preco').value),
+      disponivel:document.getElementById('disponivel').checked,
+      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
+    };
+    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+
+    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
+
+    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
+      method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
+    });
+    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    showMessage('✔ Produto atualizado pelo nome com sucesso!',true);
+    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
+    loadProductCategories();
+  }catch(err){
+    showMessage(`✖ Falha ao atualizar por nome: ${err.message}`,false);
+    console.error(err);
+  }finally{
+    btn.disabled=false; btn.innerHTML='<span>Atualizar por Nome</span>';
+  }
+}
+
+// ---------------------- Deletar por Nome ----------------------
+async function deleteProductByName(){
+  const btn=document.getElementById('deleteByNameBtn');
+  btn.disabled=true; btn.innerHTML='<span>Deletando... 🗑️</span>';
+  try{
+    const nome=document.getElementById('nome').value.trim();
+    if(!nome) throw new Error('Informe o nome do produto para deletar.');
+    if(!confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)){
+      btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
+      return;
+    }
+    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
+      method:'DELETE',headers:{'Content-Type':'application/json','Accept':'application/json'}
+    });
+    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    showMessage('✔ Produto deletado pelo nome com sucesso!',true);
+    document.getElementById('productForm').reset();
+    loadProductCategories();
+    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
+  }catch(err){
+    showMessage(`✖ Falha ao deletar por nome: ${err.message}`,false);
+    console.error(err);
+  }finally{
+    btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
+  }
+}
 </script>
 </body>
 </html>
