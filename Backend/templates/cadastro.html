@@ -44,12 +44,7 @@
           <label for="categoria">Categoria:</label>
           <select id="categoria" name="categoria" class="form-control">
             <option value="">Selecione uma categoria</option>
-            <option value="2">Doces</option>
-            <option value="3">Salgados</option>
-            <option value="4">Pães</option>
-            <option value="5">Bolos</option>
-            <option value="6">Tortas</option>
-            <option value="7">Mousses</option>
+            <!-- As opções serão carregadas dinamicamente via JavaScript -->
           </select>
           <span class="floating-label">Opcional</span>
         </div>
@@ -85,21 +80,76 @@
 
 <script>
 const API_BASE_URL = window.location.origin + '/api';
-const CATEGORIAS = {
-  2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"
-};
+let CATEGORIAS = {}; // Será preenchido dinamicamente
 
 // ---------------------- Inicialização ----------------------
 document.addEventListener('DOMContentLoaded', function(){
   const params = new URLSearchParams(window.location.search);
-  if (params.get('id')) loadProduct(params.get('id'));
-  loadProductCategories();
+  
+  // Carrega categorias primeiro, depois produtos e produto específico se houver ID
+  loadCategorias().then(() => {
+    if (params.get('id')) loadProduct(params.get('id'));
+    loadProductCategories();
+  });
 
   document.getElementById('productForm').addEventListener('submit', function(e){
     e.preventDefault();
     handleSubmit();
   });
 });
+
+// ---------------------- Carregar Categorias da API ----------------------
+async function loadCategorias() {
+  try {
+    const resp = await fetch(`${API_BASE_URL}/categorias`, {
+      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
+    });
+    
+    if (!resp.ok) throw new Error(`Erro ao carregar categorias: ${resp.status}`);
+    
+    const categorias = await resp.json();
+    
+    // Ordena categorias por ID
+    categorias.sort((a, b) => a.id - b.id);
+    
+    // Preenche o objeto CATEGORIAS para uso em outras funções
+    CATEGORIAS = {};
+    categorias.forEach(cat => {
+      CATEGORIAS[cat.id] = cat.nome;
+    });
+    
+    // Preenche o dropdown de categorias
+    const select = document.getElementById('categoria');
+    
+    // Mantém a opção padrão
+    const defaultOption = select.querySelector('option[value=""]');
+    select.innerHTML = '';
+    select.appendChild(defaultOption);
+    
+    // Adiciona as categorias da API
+    categorias.forEach(categoria => {
+      const option = document.createElement('option');
+      option.value = categoria.id;
+      option.textContent = categoria.nome;
+      select.appendChild(option);
+    });
+    
+  } catch (err) {
+    console.error('Erro ao carregar categorias:', err);
+    showMessage('⚠️ Não foi possível carregar as categorias. Usando categorias padrão.', false);
+    
+    // Fallback para categorias padrão caso a API falhe
+    CATEGORIAS = {2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"};
+    
+    const select = document.getElementById('categoria');
+    Object.entries(CATEGORIAS).forEach(([id, nome]) => {
+      const option = document.createElement('option');
+      option.value = id;
+      option.textContent = nome;
+      select.appendChild(option);
+    });
+  }
+}
 
 // ---------------------- Tema ----------------------
 const themeToggle = document.getElementById('themeToggle'),
@@ -180,6 +230,10 @@ async function loadProductCategories(){
       list.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>';
       return;
     }
+    
+    // Ordena produtos por ID
+    produtos.sort((a, b) => a.id - b.id);
+    
     const agrupado={};
     produtos.forEach(p=>{
       const idCat=p.categoria?.id || 'sem-categoria';
@@ -198,7 +252,9 @@ async function loadProductCategories(){
       header.innerHTML=`${cat}<i class="fas fa-chevron-down"></i>`;
       const ul=document.createElement('ul');
       ul.className='product-list';
-      agrupado[cat].forEach(p=>{
+      
+      // Ordena produtos dentro da categoria por ID
+      agrupado[cat].sort((a, b) => a.id - b.id).forEach(p=>{
         const li=document.createElement('li');
         li.className='product-item';
         li.innerHTML=`<span class="product-name">${p.nome}</span>
