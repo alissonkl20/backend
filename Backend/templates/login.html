@@ -6,12 +6,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">  
     <title>Login com Sistema de Temas</title>
+    <!-- Biblioteca de criptografia -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 </head>
 <body>
     <div class="glow-container">
         <div class="container">
-            <!-- Formulário de login com tema integrado -->
-            <form class="form" method="POST">
+            <!-- Formulário de login -->
+            <form class="form" method="POST" id="loginForm">
                 <div id="login-area">
                     <p>LOGIN</p>
                     <p id="sicro">Log in to your account</p>
@@ -33,7 +35,6 @@
                 <div id="background-color"></div>
                 <div id="whitefilter"></div>
                 <div id="link-circle">
-                    <!-- Ícones de redes sociais (opcional) -->
                     <i class="fab fa-facebook-f"></i>
                     <i class="fab fa-instagram"></i>
                     <i class="fab fa-linkedin-in"></i>
@@ -45,47 +46,43 @@
     <button class="theme-toggle" id="themeToggle">🌙</button>
 
     <script>
-        // Funcionalidade para alternar entre temas
+        // Criptografa a senha antes de enviar
+        document.getElementById("loginForm").addEventListener("submit", function(e) {
+            const passwordInput = document.getElementById("password");
+            const hashed = CryptoJS.SHA256(passwordInput.value).toString();
+            passwordInput.value = hashed;
+        });
+
+        // Alternar tema
         const themeToggle = document.getElementById('themeToggle');
         const body = document.body;
-        
-        // Verificar se há um tema salvo no localStorage
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme) {
             body.setAttribute('data-theme', savedTheme);
             updateThemeButton(savedTheme);
         }
-        
         themeToggle.addEventListener('click', () => {
             const currentTheme = body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
             body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeButton(newTheme);
         });
-        
         function updateThemeButton(theme) {
             themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
         }
-        
-        // Adicionar efeitos de interação aos botões
+
+        // Efeito ripple nos botões
         document.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', function(e) {
-                // Efeito de ripple
                 const ripple = document.createElement('span');
                 ripple.classList.add('ripple-effect');
                 this.appendChild(ripple);
-                
                 const x = e.clientX - this.getBoundingClientRect().left;
                 const y = e.clientY - this.getBoundingClientRect().top;
-                
                 ripple.style.left = `${x}px`;
                 ripple.style.top = `${y}px`;
-                
-                setTimeout(() => {
-                    ripple.remove();
-                }, 600);
+                setTimeout(() => { ripple.remove(); }, 600);
             });
         });
     </script>
