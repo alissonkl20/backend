@@ -58,6 +58,12 @@ def create_app():
     with app.app_context():
         db.create_all()
         print("✅ Tabelas criadas/verificadas!")
+        
+        # DEBUG: Verificar usuários no banco
+        users = UsuarioModel.query.all()
+        print(f"📊 Usuários no banco: {len(users)}")
+        for user in users:
+            print(f"👤 Usuário: {user.email}")
 
     # Blueprints
     app.register_blueprint(categoria_bp)
@@ -73,16 +79,29 @@ def create_app():
             email = request.form.get("email")
             password_sha256 = request.form.get("password")  # já vem SHA-256 do frontend
 
+            # DEBUG: Log dos dados recebidos
+            print(f"🔐 Tentativa de login - Email: {email}")
+            print(f"🔐 Senha SHA-256 recebida: {password_sha256}")
+
             user = UsuarioModel.query.filter_by(email=email).first()
+            print(f"👤 Usuário encontrado: {user is not None}")
 
             # Comparar bcrypt(SHA-256) com hash do banco
-            if user and bcrypt.check_password_hash(user.senha, password_sha256):
-                login_user(user)
-                next_page = request.args.get("next")
-                flash("Login realizado com sucesso!", "success")
-                return redirect(next_page or url_for("dashboard"))
-            else:
-                flash("Login falhou. Verifique seu email e senha.", "danger")
+            if user:
+                print(f"🔑 Hash do banco: {user.senha}")
+                password_match = bcrypt.check_password_hash(user.senha, password_sha256)
+                print(f"✅ Verificação bcrypt: {password_match}")
+                
+                if password_match:
+                    login_user(user)
+                    next_page = request.args.get("next")
+                    flash("Login realizado com sucesso!", "success")
+                    print("🎉 Login bem-sucedido! Redirecionando...")
+                    return redirect(next_page or url_for("dashboard"))
+            
+            # Se chegou aqui, o login falhou
+            flash("Login falhou. Verifique seu email e senha.", "danger")
+            print("❌ Login falhou")
 
         return render_template("login.html")
 

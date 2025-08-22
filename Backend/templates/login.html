@@ -12,8 +12,8 @@
 <body>
     <div class="glow-container">
         <div class="container">
-            <!-- Formulário de login -->
-            <form class="form" method="POST" id="loginForm">
+            <!-- Formulário de login - CORRIGIDO com action -->
+            <form class="form" method="POST" action="{{ url_for('login') }}" id="loginForm">
                 <div id="login-area">
                     <p>LOGIN</p>
                     <p id="sicro">Log in to your account</p>
