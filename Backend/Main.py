@@ -14,17 +14,15 @@ from controller.ProdutoController import produto_bp, get_cardapio_data
 # Extensões
 from extensions import db
 
-# Modelos (importados para garantir criação das tabelas)
+# Modelos
 from model.ProdutoModel import ProdutoModel
 from model.CategoriaModel import CategoriaModel
 from model.UserModel import UsuarioModel
-
 
 # Carrega variáveis do .env apenas em desenvolvimento
 if os.environ.get("RENDER") is None:
     env_path = Path(__file__).parent / ".env"
     load_dotenv(dotenv_path=env_path, override=True)
-
 
 def create_app():
     app = Flask(__name__, template_folder="templates")
@@ -35,7 +33,6 @@ def create_app():
     # Configuração do banco
     database_url = os.environ.get("DATABASE_URL")
     if database_url:
-        # Render ainda usa o prefixo antigo postgres://
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         app.config["SQLALCHEMY_DATABASE_URI"] = database_url
@@ -58,12 +55,11 @@ def create_app():
     def load_user(user_id):
         return UsuarioModel.query.get(int(user_id))
 
-    # Cria tabelas automaticamente (apenas se não usar migrations)
     with app.app_context():
         db.create_all()
         print("✅ Tabelas criadas/verificadas!")
 
-    # Registra blueprints
+    # Blueprints
     app.register_blueprint(categoria_bp)
     app.register_blueprint(produto_bp)
 
@@ -75,11 +71,12 @@ def create_app():
 
         if request.method == "POST":
             email = request.form.get("email")
-            password = request.form.get("password")
+            password_sha256 = request.form.get("password")  # já vem SHA-256 do frontend
 
             user = UsuarioModel.query.filter_by(email=email).first()
 
-            if user and bcrypt.check_password_hash(user.senha, password):
+            # Comparar bcrypt(SHA-256) com hash do banco
+            if user and bcrypt.check_password_hash(user.senha, password_sha256):
                 login_user(user)
                 next_page = request.args.get("next")
                 flash("Login realizado com sucesso!", "success")
@@ -97,10 +94,10 @@ def create_app():
         if request.method == "POST":
             nome = request.form.get("nome")
             email = request.form.get("email")
-            senha = request.form.get("password")
-            confirmar_senha = request.form.get("confirm_password")
+            senha_sha256 = request.form.get("password")  # já vem SHA-256
+            confirmar_sha256 = request.form.get("confirm_password")
 
-            if senha != confirmar_senha:
+            if senha_sha256 != confirmar_sha256:
                 flash("As senhas não coincidem.", "danger")
                 return render_template("cadastro.html")
 
@@ -108,7 +105,8 @@ def create_app():
                 flash("Este email já está em uso.", "danger")
                 return render_template("cadastro.html")
 
-            hashed_password = bcrypt.generate_password_hash(senha).decode("utf-8")
+            # Salvar bcrypt(SHA-256)
+            hashed_password = bcrypt.generate_password_hash(senha_sha256).decode("utf-8")
             novo_usuario = UsuarioModel(nome=nome, email=email, senha=hashed_password)
 
             db.session.add(novo_usuario)
@@ -153,10 +151,8 @@ def create_app():
 
     return app
 
-
 # Instância para o Gunicorn
 app = create_app()
 
 if __name__ == "__main__":
-    # Em dev você pode usar debug=True, mas em produção o Render usa Gunicorn
     app.run(debug=True)
