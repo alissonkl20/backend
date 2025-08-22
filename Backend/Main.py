@@ -15,7 +15,7 @@ from extensions import db
 # Importe seus modelos PARA FORÇAR A CRIAÇÃO
 from model.ProdutoModel import ProdutoModel
 from model.CategoriaModel import CategoriaModel
-from model.UserModel import UsuarioModel  # Vamos criar este modelo
+from model.UserModel import UsuarioModel
 
 # Carrega variáveis do .env apenas em desenvolvimento
 if os.environ.get('RENDER') is None:
@@ -66,7 +66,6 @@ def create_app():
     # Rotas de autenticação
     @app.route('/login', methods=['GET', 'POST'])
     def login():
-        # Se o usuário já estiver logado, redirecione para o dashboard
         if current_user.is_authenticated:
             return redirect(url_for('dashboard'))
             
@@ -88,7 +87,6 @@ def create_app():
 
     @app.route('/cadastro_usuario', methods=['GET', 'POST'])
     def cadastro_usuario():
-        # Se o usuário já estiver logado, redirecione para o dashboard
         if current_user.is_authenticated:
             return redirect(url_for('dashboard'))
             
@@ -98,7 +96,6 @@ def create_app():
             senha = request.form.get('password')
             confirmar_senha = request.form.get('confirm_password')
             
-            # Validações básicas
             if senha != confirmar_senha:
                 flash('As senhas não coincidem.', 'danger')
                 return render_template('cadastro.html')
@@ -107,7 +104,6 @@ def create_app():
                 flash('Este email já está em uso.', 'danger')
                 return render_template('cadastro.html')
             
-            # Cria novo usuário
             hashed_password = bcrypt.generate_password_hash(senha).decode('utf-8')
             novo_usuario = UsuarioModel(nome=nome, email=email, senha=hashed_password)
             
@@ -132,6 +128,18 @@ def create_app():
     @login_required
     def dashboard():
         return render_template('dashboard.html', usuario=current_user)
+
+    @app.route('/create_product', methods=['GET', 'POST'])
+    @login_required
+    def create_product():
+        if request.method == 'POST':
+            # Lógica para criar o produto
+            pass
+        return render_template('create_product.html', usuario=current_user)
+
+    @app.route('/cadastro')
+    def cadastro_redirect():
+        return redirect(url_for('create_product'))
 
     @app.route('/cardapio')
     @login_required
