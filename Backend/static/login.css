@@ -1,0 +1,488 @@
+/* Variáveis de tema */
+:root {
+    /* Tema Light (padrão) */
+    --bg-color: #f8f9fa;
+    --text-color: #212529;
+    --primary-color: #4e73df;
+    --secondary-color: #1cc88a;
+    --danger-color: #e74a3b;
+    --warning-color: #f6c23e;
+    --card-bg: #ffffff;
+    --card-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    --border-color: #e3e6f0;
+    --hover-color: #f6f6f9;
+    --input-bg: #ffffff;
+    
+    /* Cores Neon (versão light mais suave) */
+    --neon-green: #00a152;
+    --neon-blue: #2a00b3;
+    --neon-purple: #6a00b3;
+    --neon-pink: #b3009d;
+    --neon-glow: rgba(0, 161, 82, 0.3);
+    
+    /* Ícones */
+    --icon-color: #5a5c69;
+    --icon-hover: #4e73df;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a2e;
+    --text-color: #f8f9fa;
+    --primary-color: #6c63ff;
+    --secondary-color: #20c997;
+    --danger-color: #ff6b6b;
+    --warning-color: #ffd166;
+    --card-bg: #16213e;
+    --card-shadow: 0 0.15rem 1.75rem 0 rgba(0, 0, 0, 0.4);
+    --border-color: #2d3748;
+    --hover-color: #2d3748;
+    --input-bg: #1e2a4a;
+    
+    /* Cores Neon (full neon no dark) */
+    --neon-green: #00ff75;
+    --neon-blue: #3700ff;
+    --neon-purple: #9d00ff;
+    --neon-pink: #ff00ea;
+    --neon-glow: rgba(0, 255, 117, 0.3);
+    
+    /* Ícones */
+    --icon-color: #a0aec0;
+    --icon-hover: #6c63ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    line-height: 1.6;
+}
+
+/* Container principal com efeito de glow */
+.glow-container {
+    background-image: linear-gradient(163deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    border-radius: 1.375rem;
+    transition: all 0.4s ease;
+    padding: 0.1875rem;
+    width: auto;
+    margin: 1.25rem auto;
+    box-shadow: 0 0.25rem 1.875rem var(--neon-glow);
+}
+
+.container, .container-custom {
+    background: var(--card-bg);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    padding: 0.1875rem;
+    box-shadow: var(--card-shadow);
+}
+
+.glow-container:hover {
+    box-shadow: 0 0 1.875rem 0.0625rem var(--neon-glow);
+}
+
+.glow-container:hover .container,
+.glow-container:hover .container-custom {
+    transform: scale(0.99);
+}
+
+/* Botão de alternar tema */
+.theme-toggle {
+    position: fixed;
+    bottom: 1.875rem;
+    right: 1.875rem;
+    width: 3.125rem;
+    height: 3.125rem;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    border: none;
+    z-index: 100;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    background-color: var(--secondary-color);
+}
+
+/* Estilos do formulário de login (adaptados para usar as variáveis) */
+.form, .form-custom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--card-bg);
+    width: 15.5em;
+    height: 22.5em;
+    border: 2px solid var(--primary-color);
+    border-bottom-left-radius: 1.5em;
+    border-top-right-radius: 1.5em;
+    box-shadow: -10px 0px 0px var(--primary-color), -10px 5px 5px rgb(0, 0, 0, 0.2);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.25s ease;
+}
+
+/* Ajuste de altura para formulário de cadastro */
+.form-custom {
+    height: 28em; /* Mais alto para campos adicionais */
+}
+
+#login-area,
+#email-area,
+#password-area,
+#footer-area {
+    position: relative;
+    z-index: 2;
+}
+
+#login-area {
+    width: 100%;
+    height: 3.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+#login-area p {
+    top: 0.1em;
+    font-size: 1em;
+    font-weight: bold;
+    position: absolute;
+    z-index: 2;
+}
+
+#login-area #behind {
+    top: 50%;
+    font-size: 1.5em;
+    font-weight: bold;
+    position: absolute;
+    z-index: 1;
+    color: var(--secondary-color);
+}
+
+ #login-area #sicro{
+    top: 50%;
+    font-size: 1em;
+    font-weight: bold;
+    position: absolute;
+    z-index: 1;
+    color: var(--secondary-color);
+}
+
+#email-area {
+    width: 100%;
+    padding-left: 10%;
+    padding-right: 10%;
+    height: 5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 1em;
+    transition: all 0.25s ease;
+}
+
+#email-area input {
+    width: 100%;
+    border: 2px solid var(--primary-color);
+    border-radius: 0.5em;
+    height: 2.5em;
+    padding-left: 1em;
+    font-size: 0.95em;
+    font-weight: 100;
+    transition: all 0.5s ease;
+    outline: none;
+    box-shadow: 0px 5px 5px -3px rgb(0, 0, 0, 0.2);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+#password-area {
+    width: 100%;
+    padding-left: 10%;
+    padding-right: 10%;
+    height: 6em;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    flex-direction: column;
+    transition: all 0.25s ease;
+}
+
+#password-area input {
+    width: 100%;
+    border: 2px solid var(--primary-color);
+    font-size: 0.95em;
+    border-radius: 0.5em;
+    height: 2.5em;
+    padding-left: 1em;
+    transition: all 0.25s ease;
+    outline: none;
+    box-shadow: 0px 5px 5px -3px rgb(0, 0, 0, 0.2);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+#password-area a {
+    padding-top: 0.5em;
+    font-size: 0.8em;
+    font-weight: bold;
+    transition: all 0.25s ease;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+#footer-area {
+    margin-top: 0%;
+    padding-top: 0%;
+    width: 100%;
+    padding-left: 10%;
+    padding-right: 10%;
+    height: 7em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: var(--primary-color);
+    transition: all 0.25s ease;
+}
+
+#footer-area button {
+    width: 100%;
+    border: 2px solid var(--primary-color);
+    border-radius: 0.5em;
+    height: 2.5em;
+    padding-left: 1em;
+    font-size: 0.95em;
+    font-weight: 100;
+    transition: all 0.25s ease;
+    color: white;
+    font-weight: bold;
+    background-color: var(--primary-color);
+    box-shadow: 0px 5px 5px -3px rgb(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+#footer-area p,
+#footer-area a {
+    font-size: 0.8em;
+    transition: all 0.25s ease;
+}
+
+#text-inside {
+    padding-top: 0.5em;
+    display: flex;
+}
+
+#link {
+    padding-left: 0.1em;
+    font-weight: bold;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+#background-color {
+    width: 100%;
+    height: 3.5em;
+    background-color: var(--primary-color);
+    position: absolute;
+    top: 0em;
+    z-index: 1;
+    transition: all 0.5s ease;
+    box-shadow: inset 5px 0px var(--primary-color);
+}
+
+#link-circle {
+    width: 100%;
+    height: 4.5em;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-left: 15%;
+    padding-right: 15%;
+}
+
+#link-circle svg {
+    transition: all 0.25s ease;
+    fill: var(--primary-color);
+}
+
+#whitefilter {
+    width: 3.5em;
+    height: 3.5em;
+    top: 2.5px;
+    right: 2.5px;
+    position: absolute;
+    z-index: 2;
+    border-top-right-radius: 1.25em;
+    box-shadow: 35px -35px 0px -1px var(--card-bg);
+}
+
+::placeholder {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.form:hover,
+.form-custom:hover {
+    width: 16em;
+    height: 23em;
+}
+
+.form-custom:hover {
+    height: 29em; /* Ajuste para formulário de cadastro */
+}
+
+#email-area:hover ~ #background-color {
+    height: 4.2em;
+    transform: translateY(4em);
+}
+
+#email-area:hover,
+#password-area:hover,
+#footer-area:hover {
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+#email-area:hover p {
+    color: white;
+}
+
+#email-area:hover input {
+    color: white;
+    border: 2px solid white;
+    background-color: var(--primary-color);
+    height: 3em;
+}
+
+#email-area:hover ::placeholder {
+    color: white;
+}
+
+#password-area:hover ~ #background-color {
+    height: 5.5em;
+    transform: translateY(7.8em);
+}
+
+#footer-area:hover ~ #background-color {
+    height: 5.9em;
+    transform: translateY(13.2em);
+}
+
+#password-area:hover p {
+    color: white;
+}
+
+#password-area:hover a {
+    color: white;
+    padding-right: 5%;
+}
+
+#password-area:hover input {
+    color: white;
+    border: 2px solid white;
+    background-color: var(--primary-color);
+    height: 3em;
+}
+
+#password-area:hover ::placeholder {
+    color: white;
+}
+
+#footer-area:hover p,
+#footer-area:hover a {
+    color: white;
+}
+
+#footer-area:hover button {
+    border: 2px solid white;
+    background-color: var(--primary-color);
+    height: 3em;
+}
+
+#footer-area button:active {
+    color: var(--primary-color);
+    background-color: white;
+    width: 90%;
+}
+
+#link-circle svg:hover {
+    transform: scale(1.25);
+    margin: 0.5em;
+    fill: var(--secondary-color);
+}
+
+/* Efeito ripple para botões */
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Alertas personalizados */
+.alert-custom {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 350px;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    border: none;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.alert-success {
+    background-color: rgba(0, 255, 117, 0.1);
+    color: var(--secondary-color);
+    border-left: 4px solid var(--secondary-color);
+}
+
+.alert-danger {
+    background-color: rgba(255, 0, 106, 0.1);
+    color: var(--danger-color);
+    border-left: 4px solid var(--danger-color);
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: var(--warning-color);
+    border-left: 4px solid var(--warning-color);
+}

@@ -1,40 +1,43 @@
-
-<html lang="pt-br">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Sistema</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">  
+    <title>Login com Sistema de Temas</title>
 </head>
 <body>
     <div class="glow-container">
-        <div class="container-custom">
-            <form class="form-custom" method="POST">
+        <div class="container">
+            <!-- Formulário de login com tema integrado -->
+            <form class="form" method="POST">
                 <div id="login-area">
-                    <p>CADASTRO</p>
-                    <p id="behind">Create your account</p>
-                </div>
-                <div id="email-area">
-                    <input placeholder="NOME COMPLETO" id="nome" name="nome" class="input" type="text" required />
+                    <p>LOGIN</p>
+                    <p id="sicro">Log in to your account</p>
                 </div>
                 <div id="email-area">
                     <input placeholder="EMAIL" id="email" name="email" class="input" type="email" required />
                 </div>
                 <div id="password-area">
-                    <input placeholder="SENHA" id="password" name="password" class="input" type="password" required />
-                </div>
-                <div id="password-area">
-                    <input placeholder="CONFIRMAR SENHA" id="confirm_password" name="confirm_password" class="input" type="password" required />
+                    <input placeholder="PASSWORD" id="password" name="password" class="input" type="password" required />
+                    <a href="#">Forgot password?</a>
                 </div>
                 <div id="footer-area">
-                    <button type="submit">Criar Conta</button>
+                    <button type="submit">Log In</button>
                     <div id="text-inside">
-                        <p>Já tem uma conta?</p>
-                        <a id="link" href="{{ url_for('login') }}">Fazer Login</a>
+                        <p>Don't have an account?</p>
+                        <a id="link" href="{{ url_for('cadastro_usuario') }}">Sign Up</a>
                     </div>
                 </div>
                 <div id="background-color"></div>
                 <div id="whitefilter"></div>
+                <div id="link-circle">
+                    <!-- Ícones de redes sociais (opcional) -->
+                    <i class="fab fa-facebook-f"></i>
+                    <i class="fab fa-instagram"></i>
+                    <i class="fab fa-linkedin-in"></i>
+                </div>
             </form>
         </div>
     </div>
