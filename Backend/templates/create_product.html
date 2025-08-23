@@ -42,21 +42,15 @@
         </div>
         <div class="form-group">
           <label for="categoria">Categoria:</label>
-          <select id="categoria" name="categoria" class="form-control">
+          <select id="categoria" name="categoria" class="form-control" required>
             <option value="">Selecione uma categoria</option>
             <!-- As opções serão carregadas dinamicamente via JavaScript -->
           </select>
-          <span class="floating-label">Opcional</span>
+          <span class="floating-label">Obrigatório</span>
         </div>
         <div class="button-group">
           <button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
             <span id="buttonText">Cadastrar Produto</span>
-          </button>
-          <button type="button" class="btn" onclick="updateProductByName()" id="updateByNameBtn">
-            <span>Atualizar por Nome</span>
-          </button>
-          <button type="button" class="btn btn-danger" onclick="deleteProductByName()" id="deleteByNameBtn">
-            <span>Deletar por Nome</span>
           </button>
         </div>
       </form>
@@ -208,7 +202,7 @@ async function loadProduct(id){
     document.getElementById('nome').value = data.nome;
     document.getElementById('preco').value = data.preco;
     document.getElementById('disponivel').checked = data.disponivel;
-    document.getElementById('categoria').value = data.categoria?.id || '';
+    document.getElementById('categoria').value = data.categoria_id || '';
     document.getElementById('formTitle').textContent='Edição de Produto';
     document.getElementById('buttonText').textContent='Atualizar Produto';
     document.getElementById('id').readOnly = true;
@@ -236,7 +230,7 @@ async function loadProductCategories(){
     
     const agrupado={};
     produtos.forEach(p=>{
-      const idCat=p.categoria?.id || 'sem-categoria';
+      const idCat=p.categoria_id || 'sem-categoria';
       const nomeCat=CATEGORIAS[idCat] || 'Outros';
       if(!agrupado[nomeCat]) agrupado[nomeCat]=[];
       agrupado[nomeCat].push(p);
@@ -293,12 +287,24 @@ async function submitForm(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.innerHTML='<span>Enviando... ✨</span>';
   try{
+    const categoriaValue = document.getElementById('categoria').value.trim();
+    
+    // Validação de categoria
+    if (!categoriaValue) {
+      showMessage('✖ Por favor, selecione uma categoria', false);
+      btn.disabled = false;
+      btn.innerHTML = '<span id="buttonText">Cadastrar Produto</span>';
+      return;
+    }
+    
     const data={
       nome:document.getElementById('nome').value.trim(),
       preco:parseFloat(document.getElementById('preco').value),
       disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
+      // CORREÇÃO: Envie categoria_id diretamente
+      categoria_id: parseInt(categoriaValue)
     };
+    
     if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
     if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
 
@@ -307,7 +313,12 @@ async function submitForm(){
     const resp=await fetch(`${API_BASE_URL}/produtos`,{
       method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
     });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    
+    if(!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
+    }
+    
     const result=await resp.json();
     showMessage('✔ Produto cadastrado com sucesso! ID: '+(result.id||'Novo'),true);
     document.getElementById('productForm').reset();
@@ -326,12 +337,24 @@ async function updateProduct(id){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
   try{
+    const categoriaValue = document.getElementById('categoria').value.trim();
+    
+    // Validação de categoria
+    if (!categoriaValue) {
+      showMessage('✖ Por favor, selecione uma categoria', false);
+      btn.disabled = false;
+      btn.innerHTML = '<span id="buttonText">Atualizar Produto</span>';
+      return;
+    }
+    
     const data={
       nome:document.getElementById('nome').value.trim(),
       preco:parseFloat(document.getElementById('preco').value),
       disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
+      // CORREÇÃO: Envie categoria_id diretamente
+      categoria_id: parseInt(categoriaValue)
     };
+    
     if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
     if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
     document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
@@ -339,7 +362,12 @@ async function updateProduct(id){
     const resp=await fetch(`${API_BASE_URL}/produtos/${id}`,{
       method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
     });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
+    
+    if(!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
+    }
+    
     showMessage('✔ Produto atualizado com sucesso!',true);
     document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
     loadProductCategories();
@@ -348,65 +376,6 @@ async function updateProduct(id){
     console.error(err);
   }finally{
     btn.disabled=false; btn.innerHTML='<span id="buttonText">Atualizar Produto</span>';
-  }
-}
-
-// ---------------------- Atualizar por Nome ----------------------
-async function updateProductByName(){
-  const btn=document.getElementById('updateByNameBtn');
-  btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
-  try{
-    const nome=document.getElementById('nome').value.trim();
-    const data={
-      nome:nome,
-      preco:parseFloat(document.getElementById('preco').value),
-      disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
-    };
-    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
-
-    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
-
-    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
-      method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    showMessage('✔ Produto atualizado pelo nome com sucesso!',true);
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-    loadProductCategories();
-  }catch(err){
-    showMessage(`✖ Falha ao atualizar por nome: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span>Atualizar por Nome</span>';
-  }
-}
-
-// ---------------------- Deletar por Nome ----------------------
-async function deleteProductByName(){
-  const btn=document.getElementById('deleteByNameBtn');
-  btn.disabled=true; btn.innerHTML='<span>Deletando... 🗑️</span>';
-  try{
-    const nome=document.getElementById('nome').value.trim();
-    if(!nome) throw new Error('Informe o nome do produto para deletar.');
-    if(!confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)){
-      btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
-      return;
-    }
-    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
-      method:'DELETE',headers:{'Content-Type':'application/json','Accept':'application/json'}
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    showMessage('✔ Produto deletado pelo nome com sucesso!',true);
-    document.getElementById('productForm').reset();
-    loadProductCategories();
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-  }catch(err){
-    showMessage(`✖ Falha ao deletar por nome: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
   }
 }
 </script>
