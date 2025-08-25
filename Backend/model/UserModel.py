@@ -8,9 +8,11 @@ class UsuarioModel(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    senha = db.Column(db.String(255), nullable=False)
+    senha = db.Column(db.String(255), nullable=True)  # Permite NULL para Facebook
+    facebook_login = db.Column(db.Boolean, default=False)
+    facebook_id = db.Column(db.String(100), unique=True, nullable=True)
     
-    # Relacionamentos - CORRIGIDOS
+    # Relacionamentos
     categorias = relationship('CategoriaModel', backref='usuario', lazy=True, cascade='all, delete-orphan')
     produtos = relationship('ProdutoModel', backref='usuario', lazy=True, cascade='all, delete-orphan')
     
@@ -25,6 +27,7 @@ class UsuarioModel(db.Model, UserMixin):
             'id': self.id,
             'nome': self.nome,
             'email': self.email,
+            'facebook_login': self.facebook_login,
             'quantidade_categorias': len(self.categorias),
             'quantidade_produtos': len(self.produtos)
         }

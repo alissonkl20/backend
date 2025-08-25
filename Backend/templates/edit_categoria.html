@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar Categoria | Sistema Padaria</title>
+    <title>Editar Categoria | Sistema Padaria</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='root.css') }}">
 </head>
 <body data-theme="light">
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-plus-circle"></i> Criar Nova Categoria</h1>
-            <p>Adicione uma nova categoria para organizar seus produtos</p>
+            <h1><i class="fas fa-edit"></i> Editar Categoria</h1>
+            <p>Edite os dados da categoria</p>
         </div>
 
         <!-- Mensagens Flash -->
@@ -29,22 +29,22 @@
         {% endwith %}
 
         <div class="form-container">
-            <form action="{{ url_for('main.create_categoria') }}" method="POST">
+            <form action="{{ url_for('main.edit_categoria', id=categoria.id) }}" method="POST">
                 <div class="form-group">
                     <label for="nome">Nome da Categoria *</label>
                     <input type="text" id="nome" name="nome" class="form-control" required 
-                           placeholder="Ex: Bebidas, Doces, Salgados">
+                           value="{{ categoria.nome }}" placeholder="Ex: Bebidas, Doces, Salgados">
                 </div>
 
                 <div class="form-group">
                     <label for="descricao">Descrição</label>
                     <textarea id="descricao" name="descricao" class="form-control" 
-                              rows="4" placeholder="Descreva brevemente esta categoria"></textarea>
+                              rows="4" placeholder="Descreva brevemente esta categoria">{{ categoria.descricao }}</textarea>
                 </div>
 
                 <div class="form-actions">
                     <button type="submit" class="btn">
-                        <i class="fas fa-save"></i> Criar Categoria
+                        <i class="fas fa-save"></i> Salvar Alterações
                     </button>
                     <a href="{{ url_for('main.categorias_page') }}" class="btn btn-secondary">
                         <i class="fas fa-times"></i> Cancelar
@@ -55,34 +55,7 @@
 
         <a href="{{ url_for('main.categorias_page') }}" class="back-link">
             <i class="fas fa-arrow-left"></i> Voltar para Lista de Categorias
-        </a>        
+        </a>
     </div>
-
-    <script>
-        // Verificar se há parâmetros de mensagem na URL
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const message = urlParams.get('message');
-            const messageType = urlParams.get('type');
-            
-            if (message && messageType) {
-                // Criar elemento de mensagem flash
-                const flashDiv = document.createElement('div');
-                flashDiv.className = `flash flash-${messageType}`;
-                flashDiv.innerHTML = `
-                    <i class="fas fa-${messageType === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                    ${decodeURIComponent(message)}
-                `;
-                
-                const flashContainer = document.querySelector('.flash-messages') || document.createElement('div');
-                if (!document.querySelector('.flash-messages')) {
-                    flashContainer.className = 'flash-messages';
-                    document.querySelector('.header').after(flashContainer);
-                }
-                
-                flashContainer.appendChild(flashDiv);
-            }
-        });
-    </script>
 </body>
 </html>

@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro - Sistema</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='root.css') }}">
     <!-- Biblioteca de criptografia -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 </head>
-<body>
+<body data-theme="light">
     <div class="glow-container">
         <div class="container-custom">
             <form class="form-custom" method="POST" id="cadastroForm">
@@ -32,7 +32,7 @@
                     <button type="submit">Criar Conta</button>
                     <div id="text-inside">
                         <p>Já tem uma conta?</p>
-                        <a id="link" href="{{ url_for('login') }}">Fazer Login</a>
+                        <a id="link" href="{{ url_for('main.login') }}">Fazer Login</a>
                     </div>
                 </div>
                 <div id="background-color"></div>

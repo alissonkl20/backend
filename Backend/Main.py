@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from datetime import datetime
+import requests
+from sqlalchemy import inspect, text
 
 # Blueprints
 from controller.CategoriaController import categoria_bp
@@ -20,6 +22,9 @@ from model.ProdutoModel import ProdutoModel
 from model.CategoriaModel import CategoriaModel
 from model.UserModel import UsuarioModel
 
+# Repositórios
+from repository.CategoriaRepository import CategoriaRepository
+
 # Carrega variáveis do .env apenas em desenvolvimento
 if os.environ.get("RENDER") is None:
     env_path = Path(__file__).parent / ".env"
@@ -28,28 +33,34 @@ if os.environ.get("RENDER") is None:
 # Cria a instância do Flask
 app = Flask(__name__, template_folder="templates")
 
+# Cria um blueprint principal
+main_bp = Blueprint('main', __name__)
+
 # Configuração de segurança
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "chave-secreta-padrao-mude-isso")
 
+# Configuração do Facebook
+FACEBOOK_APP_ID = os.environ.get("FACEBOOK_APP_ID", "")
+FACEBOOK_APP_SECRET = os.environ.get("FACEBOOK_APP_SECRET", "")
+
 # Configuração do banco
 database_url = os.environ.get("DATABASE_URL")
-if database_url:
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url and database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///database.db")
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Inicializa extensões
 db.init_app(app)
 CORS(app)
-Migrate(app, db)
+migrate = Migrate(app, db)
 
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
-login_manager.login_view = "login"
+login_manager.login_view = "main.login"
 login_manager.login_message = "Por favor, faça login para acessar esta página."
 
 @login_manager.user_loader
@@ -68,66 +79,165 @@ else:
     template_path.mkdir(exist_ok=True)
     print("✅ Pasta templates criada")
 
-with app.app_context():
-    db.create_all()
-    print("✅ Tabelas criadas/verificadas!")
-    
-    # DEBUG: Verificar usuários no banco
-    users = UsuarioModel.query.all()
-    print(f"📊 Usuários no banco: {len(users)}")
-    for user in users:
-        print(f"👤 Usuário: {user.email}")
+# Função para verificar e corrigir a estrutura do banco
+def check_and_fix_database():
+    with app.app_context():
+        try:
+            inspector = inspect(db.engine)
+            
+            # Verificar se a tabela usuarios existe
+            if 'usuarios' not in inspector.get_table_names():
+                print("🗃️ Tabela 'usuarios' não existe. Criando todas as tabelas...")
+                db.create_all()
+                return True
+            
+            # Verificar colunas da tabela usuarios
+            columns = [col['name'] for col in inspector.get_columns('usuarios')]
+            print(f"📊 Colunas na tabela usuarios: {columns}")
+            
+            # Adicionar colunas faltantes se necessário
+            columns_to_add = []
+            if 'facebook_login' not in columns:
+                columns_to_add.append('facebook_login BOOLEAN DEFAULT FALSE')
+            if 'facebook_id' not in columns:
+                columns_to_add.append('facebook_id VARCHAR(100)')
+            
+            if columns_to_add:
+                print("🔄 Adicionando colunas faltantes...")
+                for column in columns_to_add:
+                    try:
+                        db.session.execute(text(f'ALTER TABLE usuarios ADD COLUMN {column}'))
+                        print(f"   ➕ Adicionada coluna: {column.split()[0]}")
+                    except Exception as e:
+                        print(f"   ❌ Erro ao adicionar coluna: {e}")
+                
+                db.session.commit()
+            
+            # Criar outras tabelas se necessário
+            db.create_all()
+            print("✅ Estrutura do banco verificada e corrigida!")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro ao verificar banco: {e}")
+            print("🔄 Recriando todas as tabelas...")
+            db.drop_all()
+            db.create_all()
+            print("✅ Todas as tabelas recriadas!")
+            return True
 
-# Registra os blueprints (SEM url_prefix adicional)
-app.register_blueprint(categoria_bp)
-app.register_blueprint(produto_bp)
+# Verificar e corrigir o banco ao iniciar
+check_and_fix_database()
 
-# Rotas de autenticação
-@app.route("/login", methods=["GET", "POST"])
+# ========== ROTAS DE AUTENTICAÇÃO ==========
+
+@main_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("main.dashboard"))
 
     if request.method == "POST":
         email = request.form.get("email")
-        password_sha256 = request.form.get("password")  # já vem SHA-256 do frontend
-
-        # DEBUG: Log dos dados recebidos
-        print(f"🔐 Tentativa de login - Email: {email}")
-        print(f"🔐 Senha SHA-256 recebida: {password_sha256}")
+        password_sha256 = request.form.get("password")
 
         user = UsuarioModel.query.filter_by(email=email).first()
-        print(f"👤 Usuário encontrado: {user is not None}")
+
+        # Verificar se é usuário do Facebook
+        if user and user.facebook_login:
+            flash("Este email está registrado com Facebook. Use o botão 'Continuar com Facebook'.", "warning")
+            return render_template("login.html")
 
         # Comparar bcrypt(SHA-256) com hash do banco
-        if user:
-            print(f"🔑 Hash do banco: {user.senha}")
-            password_match = bcrypt.check_password_hash(user.senha, password_sha256)
-            print(f"✅ Verificação bcrypt: {password_match}")
-            
-            if password_match:
-                login_user(user)
-                next_page = request.args.get("next")
-                flash("Login realizado com sucesso!", "success")
-                print("🎉 Login bem-sucedido! Redirecionando...")
-                return redirect(next_page or url_for("dashboard"))
+        if user and user.senha and bcrypt.check_password_hash(user.senha, password_sha256):
+            login_user(user)
+            next_page = request.args.get("next")
+            flash("Login realizado com sucesso!", "success")
+            return redirect(next_page or url_for("main.dashboard"))
         
-        # Se chegou aqui, o login falhou
         flash("Login falhou. Verifique seu email e senha.", "danger")
-        print("❌ Login falhou")
 
     return render_template("login.html")
 
-@app.route("/cadastro_usuario", methods=["GET", "POST"])
+@main_bp.route("/facebook-login", methods=["POST"])
+def facebook_login():
+    try:
+        data = request.get_json()
+        access_token = data.get('accessToken')
+        email = data.get('email')
+        name = data.get('name')
+        facebook_id = data.get('id')
+        
+        # Validação básica
+        if not email or not name or not facebook_id:
+            return jsonify({
+                'success': False, 
+                'message': 'Dados do Facebook incompletos'
+            }), 400
+        
+        # Verificar se já existe usuário com este email (não Facebook)
+        existing_normal_user = UsuarioModel.query.filter_by(email=email, facebook_login=False).first()
+        if existing_normal_user:
+            return jsonify({
+                'success': False, 
+                'message': 'Este email já está cadastrado com login normal. Use seu email e senha.'
+            }), 400
+        
+        # Verificar se o usuário já existe pelo Facebook ID
+        user = UsuarioModel.query.filter_by(facebook_id=facebook_id).first()
+        
+        if not user:
+            # Verificar se existe pelo email (usuário migrando para Facebook)
+            user = UsuarioModel.query.filter_by(email=email).first()
+            if user:
+                # Atualizar usuário existente para login Facebook
+                user.facebook_login = True
+                user.facebook_id = facebook_id
+                user.senha = None
+            else:
+                # Criar novo usuário para login com Facebook
+                user = UsuarioModel(
+                    nome=name, 
+                    email=email, 
+                    senha=None,
+                    facebook_login=True,
+                    facebook_id=facebook_id
+                )
+                db.session.add(user)
+            
+            db.session.commit()
+        
+        # Fazer login do usuário
+        login_user(user)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Login realizado com sucesso',
+            'redirect': url_for('main.dashboard')
+        })
+        
+    except Exception as e:
+        print(f"❌ Erro no login com Facebook: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'Erro no servidor. Tente novamente.'
+        }), 500
+
+@main_bp.route("/cadastro_usuario", methods=["GET", "POST"])
 def cadastro_usuario():
     if current_user.is_authenticated:
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("main.dashboard"))
 
     if request.method == "POST":
         nome = request.form.get("nome")
         email = request.form.get("email")
-        senha_sha256 = request.form.get("password")  # já vem SHA-256
+        senha_sha256 = request.form.get("password")
         confirmar_sha256 = request.form.get("confirm_password")
+
+        # Verificar se é um usuário do Facebook
+        existing_facebook_user = UsuarioModel.query.filter_by(email=email, facebook_login=True).first()
+        if existing_facebook_user:
+            flash("Este email já está registrado com Facebook. Use o botão 'Continuar com Facebook' para fazer login.", "warning")
+            return render_template("cadastro.html")
 
         if senha_sha256 != confirmar_sha256:
             flash("As senhas não coincidem.", "danger")
@@ -139,22 +249,27 @@ def cadastro_usuario():
 
         # Salvar bcrypt(SHA-256)
         hashed_password = bcrypt.generate_password_hash(senha_sha256).decode("utf-8")
-        novo_usuario = UsuarioModel(nome=nome, email=email, senha=hashed_password)
+        novo_usuario = UsuarioModel(
+            nome=nome, 
+            email=email, 
+            senha=hashed_password,
+            facebook_login=False
+        )
 
         db.session.add(novo_usuario)
         db.session.commit()
 
         flash("Conta criada com sucesso! Faça login.", "success")
-        return redirect(url_for("login"))
+        return redirect(url_for("main.login"))
 
     return render_template("cadastro.html")
 
-@app.route("/logout")
+@main_bp.route("/logout")
 @login_required
 def logout():
     logout_user()
     flash("Você foi desconectado.", "info")
-    return redirect(url_for("login"))
+    return redirect(url_for("main.login"))
 
 # Função para obter dados do cardápio
 def get_cardapio_data():
@@ -196,29 +311,27 @@ def get_cardapio_data():
             'atualizado_em': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
             'categorias': {},
             'total_produtos': 0,
-            'erro': f'Erro ao carregar cardápio: {str(e)}'
+            'erro': 'Erro ao carregar cardápio'
         }
 
 # Rotas protegidas
-@app.route("/")
-@app.route("/dashboard")
+@main_bp.route("/")
+@main_bp.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("dashboard.html", usuario=current_user)
 
-@app.route("/create_product", methods=["GET", "POST"])
+@main_bp.route("/create_product", methods=["GET", "POST"])
 @login_required
 def create_product():
-    if request.method == "POST":
-        # TODO: lógica de criação de produto
-        pass
-    return render_template("create_product.html", usuario=current_user)
+    categorias = CategoriaModel.query.filter_by(usuario_id=current_user.id).all()
+    return render_template("create_product.html", usuario=current_user, categorias=categorias)
 
-@app.route("/cadastro")
+@main_bp.route("/cadastro")
 def cadastro_redirect():
-    return redirect(url_for("create_product"))
+    return redirect(url_for("main.create_product"))
 
-@app.route("/cardapio")
+@main_bp.route("/cardapio")
 @login_required
 def cardapio_html():
     dados = get_cardapio_data()
@@ -226,130 +339,135 @@ def cardapio_html():
 
 # ========== ROTAS PARA CATEGORIAS ==========
 
-@app.route("/categorias")
+@main_bp.route('/categorias')
 @login_required
 def categorias_page():
-    categorias = CategoriaModel.query.filter_by(usuario_id=current_user.id).all()
+    categorias = CategoriaRepository.listar_por_usuario(current_user.id)
     return render_template("categorias.html", categorias=categorias, usuario=current_user)
 
-@app.route("/create_category", methods=["GET", "POST"])
+@main_bp.route('/create_categoria', methods=['GET', 'POST'])
 @login_required
-def create_category():
-    if request.method == "POST":
-        try:
-            nome = request.form.get("nome")
-            descricao = request.form.get("descricao", "")
-            
-            if not nome:
-                flash("Nome da categoria é obrigatório", "danger")
-                return render_template("create_category.html", usuario=current_user)
-            
-            # Verifica se já existe categoria com mesmo nome para este usuário
-            existing = CategoriaModel.query.filter_by(
-                nome=nome, 
-                usuario_id=current_user.id
-            ).first()
-            
-            if existing:
-                flash("Já existe uma categoria com este nome", "danger")
-                return render_template("create_category.html", usuario=current_user)
-            
-            nova_categoria = CategoriaModel(
-                nome=nome,
-                descricao=descricao,
-                usuario_id=current_user.id
-            )
-            
-            db.session.add(nova_categoria)
-            db.session.commit()
-            
-            flash("Categoria criada com sucesso!", "success")
-            return redirect(url_for("categorias_page"))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Erro ao criar categoria: {str(e)}", "danger")
-            return render_template("create_category.html", usuario=current_user)
-    
-    return render_template("create_category.html", usuario=current_user)
-
-@app.route("/edit_category/<int:id>", methods=["GET", "POST"])
-@login_required
-def edit_category(id):
-    categoria = CategoriaModel.query.filter_by(id=id, usuario_id=current_user.id).first()
-    
-    if not categoria:
-        flash("Categoria não encontrada", "danger")
-        return redirect(url_for("categorias_page"))
-    
-    if request.method == "POST":
-        try:
-            nome = request.form.get("nome")
-            descricao = request.form.get("descricao", "")
-            
-            if not nome:
-                flash("Nome da categoria é obrigatório", "danger")
-                return render_template("edit_category.html", categoria=categoria, usuario=current_user)
-            
-            # Verifica se outra categoria com mesmo nome existe
-            existing = CategoriaModel.query.filter(
-                CategoriaModel.nome == nome,
-                CategoriaModel.usuario_id == current_user.id,
-                CategoriaModel.id != id
-            ).first()
-            
-            if existing:
-                flash("Já existe outra categoria com este nome", "danger")
-                return render_template("edit_category.html", categoria=categoria, usuario=current_user)
-            
-            categoria.nome = nome
-            categoria.descricao = descricao
-            db.session.commit()
-            
-            flash("Categoria atualizada com sucesso!", "success")
-            return redirect(url_for("categorias_page"))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Erro ao atualizar categoria: {str(e)}", "danger")
-            return render_template("edit_category.html", categoria=categoria, usuario=current_user)
-    
-    return render_template("edit_category.html", categoria=categoria, usuario=current_user)
-
-@app.route("/delete_category/<int:id>", methods=["POST"])
-@login_required
-def delete_category(id):
-    categoria = CategoriaModel.query.filter_by(id=id, usuario_id=current_user.id).first()
-    
-    if not categoria:
-        flash("Categoria não encontrada", "danger")
-        return redirect(url_for("categorias_page"))
-    
-    try:
-        # Verifica se existem produtos nesta categoria
-        if categoria.produtos:
-            flash("Não é possível excluir categoria com produtos. Remova os produtos primeiro.", "danger")
-            return redirect(url_for("categorias_page"))
+def create_categoria():
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        descricao = request.form.get('descricao', '')
         
-        db.session.delete(categoria)
-        db.session.commit()
-        flash("Categoria excluída com sucesso!", "success")
+        if not nome:
+            flash('Nome da categoria é obrigatório', 'error')
+            return render_template("create_categoria.html")
         
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Erro ao excluir categoria: {str(e)}", "danger")
+        # Verificar se categoria já existe
+        if CategoriaRepository.existe_por_nome_e_usuario(nome, current_user.id):
+            flash('Já existe uma categoria com este nome', 'error')
+            return render_template("create_categoria.html")
+        
+        # Criar nova categoria
+        categoria = CategoriaModel(
+            nome=nome,
+            descricao=descricao,
+            usuario_id=current_user.id
+        )
+        CategoriaRepository.salvar(categoria)
+        
+        flash('Categoria criada com sucesso!', 'success')
+        return redirect(url_for('main.categorias_page'))
     
-    return redirect(url_for("categorias_page"))
+    return render_template("create_categoria.html")
 
-# Lista todas as rotas para debug
-with app.app_context():
+@main_bp.route('/edit_categoria/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_categoria(id):
+    categoria = CategoriaRepository.buscar_por_id_e_usuario(id, current_user.id)
+    if not categoria:
+        flash('Categoria não encontrada', 'error')
+        return redirect(url_for('main.categorias_page'))
+    
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        descricao = request.form.get('descricao', '')
+        
+        if not nome:
+            flash('Nome da categoria é obrigatório', 'error')
+            return render_template("edit_categoria.html", categoria=categoria)
+        
+        # Verificar se categoria já existe (excluindo a atual)
+        if nome != categoria.nome and CategoriaRepository.existe_por_nome_e_usuario(nome, current_user.id):
+            flash('Já existe uma categoria com este nome', 'error')
+            return render_template("edit_categoria.html", categoria=categoria)
+        
+        categoria.nome = nome
+        categoria.descricao = descricao
+        CategoriaRepository.salvar(categoria)
+        
+        flash('Categoria atualizada com sucesso!', 'success')
+        return redirect(url_for('main.categorias_page'))
+    
+    return render_template("edit_categoria.html", categoria=categoria)
+
+@main_bp.route('/delete_categoria/<int:id>', methods=['POST'])
+@login_required
+def delete_categoria(id):
+    if CategoriaRepository.deletar_por_id_e_usuario(id, current_user.id):
+        flash('Categoria excluída com sucesso!', 'success')
+    else:
+        flash('Categoria não encontrada', 'error')
+    
+    return redirect(url_for('main.categorias_page'))
+
+# Rotas de debug
+@main_bp.route('/debug')
+def debug():
+    return render_template('debug.html')
+
+@main_bp.route('/debug/database')
+def debug_database():
+    usuarios = UsuarioModel.query.all()
+    categorias = CategoriaModel.query.all()
+    produtos = ProdutoModel.query.all()
+    
+    return f"""
+    <h1>Debug Database</h1>
+    <p>Usuários: {len(usuarios)}</p>
+    <p>Categorias: {len(categorias)}</p>
+    <p>Produtos: {len(produtos)}</p>
+    """
+
+@main_bp.route('/debug/routes')
+def debug_routes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    
+    return render_template('debug_routes.html', routes=routes)
+
+@main_bp.route('/debug/templates')
+def debug_templates():
+    template_files = []
+    template_path = Path(app.template_folder)
+    
+    if template_path.exists():
+        for file in template_path.glob('*.html'):
+            template_files.append(file.name)
+    
+    return f"""
+    <h1>Debug Templates</h1>
+    <p>Templates encontrados: {', '.join(template_files)}</p>
+    """
+
+# REGISTRA OS BLUEPRINTS APÓS DEFINIR TODAS AS ROTAS
+app.register_blueprint(categoria_bp)
+app.register_blueprint(produto_bp)
+app.register_blueprint(main_bp)
+
+if __name__ == "__main__":
     print("🌐 Rotas registradas:")
     for rule in app.url_map.iter_rules():
-        if rule.endpoint != 'static':  # Ignora rotas estáticas
-            print(f"   {rule.rule} -> {rule.endpoint}")
-
-# Executa o aplicativo
-if __name__ == "__main__":
+        print(f"   {rule} -> {rule.endpoint}")
+    
     print("✅ Aplicativo Flask criado com sucesso!")
     print("🌐 Servidor iniciando em http://localhost:5000")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host="0.0.0.0")

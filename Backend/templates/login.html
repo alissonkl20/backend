@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">  
+    <link rel="stylesheet" href="{{ url_for('static', filename='root.css') }}"> 
     <title>Login com Sistema de Temas</title>
     <!-- Biblioteca de criptografia -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
@@ -13,7 +13,7 @@
     <div class="glow-container">
         <div class="container">
             <!-- Formulário de login - CORRIGIDO com action -->
-            <form class="form" method="POST" action="{{ url_for('login') }}" id="loginForm">
+            <form class="form" method="POST" action="{{ url_for('main.login') }}" id="loginForm">
                 <div id="login-area">
                     <p>LOGIN</p>
                     <p id="sicro">Log in to your account</p>
@@ -27,9 +27,20 @@
                 </div>
                 <div id="footer-area">
                     <button type="submit">Log In</button>
+                    
+                    <!-- Divisor entre formulário e login social -->
+                    <div class="divider">
+                        <span>ou</span>
+                    </div>
+                    
+                    <!-- Botão de login com Facebook -->
+                    <button type="button" id="facebook-login" class="social-login-btn">
+                        <i class="fab fa-facebook-f"></i> Continuar com Facebook
+                    </button>
+                    
                     <div id="text-inside">
                         <p>Don't have an account?</p>
-                        <a id="link" href="{{ url_for('cadastro_usuario') }}">Sign Up</a>
+                        <a id="link" href="{{ url_for('main.cadastro_usuario') }}">Sign Up</a>
                     </div>
                 </div>
                 <div id="background-color"></div>
@@ -84,6 +95,67 @@
                 ripple.style.top = `${y}px`;
                 setTimeout(() => { ripple.remove(); }, 600);
             });
+        });
+
+        // Inicialização do SDK do Facebook
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId: 'SEU_APP_ID_DO_FACEBOOK', // Substitua pelo seu App ID
+                cookie: true,
+                xfbml: true,
+                version: 'v18.0'
+            });
+        };
+
+        // Carregar o SDK do Facebook assincronamente
+        (function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        // Função de login com Facebook
+        document.getElementById('facebook-login').addEventListener('click', function() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    // Usuário logou e autorizou o app
+                    console.log('Bem-vindo! Fetching your information.... ');
+                    
+                    // Obter informações do usuário
+                    FB.api('/me', {fields: 'name,email'}, function(response) {
+                        console.log('Informações do usuário: ' + JSON.stringify(response));
+                        
+                        // Enviar dados para o servidor
+                        fetch('{{ url_for("main.facebook_login") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                accessToken: FB.getAuthResponse().accessToken,
+                                email: response.email,
+                                name: response.name
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = data.redirect || '/';
+                            } else {
+                                alert('Erro no login: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erro:', error);
+                        });
+                    });
+                } else {
+                    // Usuário cancelou o login
+                    console.log('Login com Facebook cancelado.');
+                }
+            }, {scope: 'email,public_profile'}); // Permissões necessárias
         });
     </script>
 </body>
