@@ -1,0 +1,311 @@
+@import url(root.css);
+
+/* ===== ESTILOS PARA PÁGINA DE LOGIN ===== */
+
+.glow-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 450px;
+    z-index: 2;
+}
+
+.form {
+    background-color: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+/* Área de login */
+#login-area {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+#login-area p:first-child {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+#sicro {
+    font-size: 1rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    font-weight: 400;
+}
+
+/* Áreas de input */
+#email-area, #password-area {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+[data-theme="dark"] .input:focus {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+}
+
+.input::placeholder {
+    color: var(--text-color);
+    opacity: 0.6;
+}
+
+/* Link de esqueci a senha */
+#password-area {
+    position: relative;
+}
+
+#password-area a {
+    position: absolute;
+    right: 0;
+    bottom: -25px;
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+#password-area a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+/* Área do rodapé */
+#footer-area {
+    margin-top: 2rem;
+}
+
+#footer-area button[type="submit"] {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    background: var(--gradient-primary);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+#footer-area button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glow-primary);
+}
+
+/* Divisor */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--border-color);
+}
+
+.divider span {
+    padding: 0 1rem;
+    font-size: 0.9rem;
+}
+
+/* Botões de login social */
+.social-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.social-login-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#facebook-login {
+    background: linear-gradient(135deg, #3b5998, #4a69a4);
+    color: white;
+}
+
+#google-login {
+    background: linear-gradient(135deg, #DB4437, #EA4335);
+    color: white;
+}
+
+.social-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+#facebook-login:hover {
+    box-shadow: 0 5px 15px rgba(59, 89, 152, 0.4);
+}
+
+#google-login:hover {
+    box-shadow: 0 5px 15px rgba(219, 68, 55, 0.4);
+}
+
+/* Texto de cadastro */
+#text-inside {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#text-inside p {
+    margin: 0;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+#link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#link:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+/* Botão de alternar tema */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: var(--gradient-primary);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: var(--glow-primary);
+}
+
+/* Efeito ripple */
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.7);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Responsividade */
+@media (max-width: 576px) {
+    .form {
+        padding: 1.5rem;
+    }
+    
+    #login-area p:first-child {
+        font-size: 2rem;
+    }
+    
+    .social-buttons-container {
+        gap: 0.8rem;
+    }
+    
+    .social-login-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+    }
+    
+    #text-inside {
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+}
+
+/* Animações suaves */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.glow-container {
+    animation: fadeIn 0.5s ease-out;
+}

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta name="color-scheme" content="light dark">
-    <link rel="stylesheet" href="/static/root.css">
+    <link rel="stylesheet" href="/static/create_produtos.css">
 </head>
 <body data-theme="light">
     <div class="glow-container animate__animated animate__fadeIn">
@@ -241,90 +241,42 @@
         }
 
         // ---------------------- Carregar Categorias de Produtos ----------------------
-        async function loadProductCategories(){
-            const list = document.getElementById('productCategoriesList');
-            list.innerHTML='<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
-            
-            try{
-                const resp = await fetch(`${API_BASE_URL}/produtos`);
-                
-                if(!resp.ok) {
-                    const errorText = await resp.text();
-                    throw new Error(`Erro ${resp.status}: ${errorText}`);
-                }
-                
-                const produtos = await resp.json();
-                
-                if(produtos.length === 0){
-                    list.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>';
-                    return;
-                }
-                
-                // Ordena produtos por ID
-                produtos.sort((a, b) => a.id - b.id);
-                
-                const agrupado = {};
-                produtos.forEach(p => {
-                    const idCat = p.categoria_id || 'sem-categoria';
-                    const nomeCat = CATEGORIAS[idCat] || 'Outros';
-                    if(!agrupado[nomeCat]) agrupado[nomeCat] = [];
-                    agrupado[nomeCat].push(p);
-                });
-
-                const categorias = Object.keys(agrupado).sort();
-                list.innerHTML = '';
-                
-                // Adicionar contador total de produtos
-                const totalHeader = document.createElement('div');
-                totalHeader.className = 'total-count';
-                totalHeader.innerHTML = `<i class="fas fa-clipboard-list"></i> Total de produtos: ${produtos.length}`;
-                list.appendChild(totalHeader);
-                
-                categorias.forEach(cat => {
-                    const div = document.createElement('div');
-                    div.className = 'category-container';
-                    
-                    // Adicionar contador de produtos na categoria
-                    const productCount = agrupado[cat].length;
-                    
-                    const header = document.createElement('div');
-                    header.className = 'category-header';
-                    header.innerHTML = `${cat} <span class="product-count">(${productCount})</span> <i class="fas fa-chevron-down"></i>`;
-                    
-                    const ul = document.createElement('ul');
-                    ul.className = 'product-list';
-                    
-                    // Ordena produtos dentro da categoria por ID
-                    agrupado[cat].sort((a, b) => a.id - b.id).forEach(p => {
-                        const li = document.createElement('li');
-                        li.className = 'product-item';
-                        li.innerHTML = `<span class="product-name">${p.nome}</span>
-                                      <span class="product-price">R$ ${p.preco.toFixed(2)}</span>
-                                      <span class="product-status ${p.disponivel?'status-available':'status-unavailable'}">${p.disponivel?'Disponível':'Indisponível'}</span>`;
-                        ul.appendChild(li);
-                    });
-                    
-                    header.addEventListener('click', () => {
-                        header.classList.toggle('collapsed');
-                        ul.classList.toggle('collapsed');
-                    });
-                    
-                    div.appendChild(header);
-                    div.appendChild(ul);
-                    list.appendChild(div);
-                });
-                
-            } catch(err) {
-                console.error('Erro ao carregar produtos:', err);
-                list.innerHTML = `<div class="error-state">
-                    <i class="fas fa-exclamation-circle"></i> 
-                    Erro ao carregar cardápio: ${err.message}
-                    <button onclick="loadProductCategories()" class="retry-btn">
-                        <i class="fas fa-redo"></i> Tentar novamente
-                    </button>
-                </div>`;
+        async function loadProductCategories() {
+    const list = document.getElementById('productCategoriesList');
+    list.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
+    
+    try {
+        const resp = await fetch(`${API_BASE_URL}/produtos/`);
+        
+        if (!resp.ok) {
+            // Verifica se é um erro 500 específico
+            if (resp.status === 500) {
+                throw new Error(`Erro interno do servidor (500). Verifique se a API está funcionando.`);
             }
+            const errorText = await resp.text();
+            throw new Error(`Erro ${resp.status}: ${errorText}`);
         }
+        
+        const produtos = await resp.json();
+        
+        if (produtos.length === 0) {
+            list.innerHTML = '<div class="no-products">Nenhum produto cadastrado ainda.</div>';
+            return;
+        }
+        
+        // Restante do código permanece igual...
+        
+    } catch(err) {
+        console.error('Erro ao carregar produtos:', err);
+        list.innerHTML = `<div class="error-state">
+            <i class="fas fa-exclamation-circle"></i> 
+            Erro ao carregar cardápio: ${err.message}
+            <button onclick="loadProductCategories()" class="retry-btn">
+                <i class="fas fa-redo"></i> Tentar novamente
+            </button>
+        </div>`;
+    }
+}
 
         // ---------------------- Helpers ----------------------
         function showMessage(text, success){

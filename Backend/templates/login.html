@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='root.css') }}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
     <title>Login com Sistema de Temas</title>
     <!-- Biblioteca de criptografia -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
@@ -99,65 +99,100 @@
             });
         });
 
-        // Inicialização do SDK do Facebook
         window.fbAsyncInit = function() {
             FB.init({
-                appId: 'SEU_APP_ID_DO_FACEBOOK', // Substitua pelo seu App ID
+                appId: 'SEU_APP_ID_AQUI', // SUBSTITUA PELO SEU APP ID REAL
                 cookie: true,
                 xfbml: true,
-                version: 'v18.0'
+                version: 'v19.0'
             });
+            
+            console.log('Facebook SDK inicializado');
+            
+            // Agora que está inicializado, podemos adicionar o event listener
+            document.getElementById('facebook-login').addEventListener('click', facebookLoginHandler);
         };
 
-        // Carregar o SDK do Facebook assincronamente
+        // Carregar SDK do Facebook - CORRIGIDO
         (function(d, s, id) {
             var js, fjs = d.getElementsByTagName(s)[0];
             if (d.getElementById(id)) return;
             js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+            // Usar protocolo relativo para funcionar em HTTP e HTTPS
+            js.src = "//connect.facebook.net/pt_BR/sdk.js";
+            js.async = true;
+            js.defer = true;
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
 
-        // Função de login com Facebook
-        document.getElementById('facebook-login').addEventListener('click', function() {
+        // Função de login com Facebook - CORRIGIDA
+        function facebookLoginHandler() {
+            // Verificar se estamos em localhost (permitido) ou HTTPS
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1';
+            const isHttps = window.location.protocol === 'https:';
+            
+            if (!isLocalhost && !isHttps) {
+                alert('Para login com Facebook, esta página precisa usar HTTPS.');
+                return;
+            }
+
+            // Verificar se o SDK foi inicializado
+            if (typeof FB === 'undefined') {
+                alert('Facebook SDK não carregado. Aguarde um momento e tente novamente.');
+                return;
+            }
+
             FB.login(function(response) {
                 if (response.authResponse) {
-                    // Usuário logou e autorizou o app
-                    console.log('Bem-vindo! Fetching your information.... ');
+                    console.log('Login autorizado, obtendo informações...');
                     
-                    // Obter informações do usuário
-                    FB.api('/me', {fields: 'name,email'}, function(response) {
-                        console.log('Informações do usuário: ' + JSON.stringify(response));
+                    FB.api('/me', {fields: 'name,email'}, function(userInfo) {
+                        console.log('Dados do usuário:', userInfo);
                         
-                        // Enviar dados para o servidor
+                        // Enviar para o servidor
                         fetch('{{ url_for("main.facebook_login") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                accessToken: FB.getAuthResponse().accessToken,
-                                email: response.email,
-                                name: response.name
+                                accessToken: response.authResponse.accessToken,
+                                email: userInfo.email,
+                                name: userInfo.name,
+                                userID: userInfo.id
                             })
                         })
-                        .then(res => res.json())
+                        .then(response => response.json())
                         .then(data => {
                             if (data.success) {
                                 window.location.href = data.redirect || '/';
                             } else {
-                                alert('Erro no login: ' + data.message);
+                                alert('Erro no login: ' + (data.message || 'Erro desconhecido'));
                             }
                         })
                         .catch(error => {
                             console.error('Erro:', error);
+                            alert('Erro ao conectar com o servidor');
                         });
                     });
                 } else {
-                    // Usuário cancelou o login
-                    console.log('Login com Facebook cancelado.');
+                    console.log('Login com Facebook cancelado pelo usuário');
                 }
-            }, {scope: 'email,public_profile'}); // Permissões necessárias
+            }, {scope: 'email,public_profile', return_scopes: true});
+        }
+
+        // Inicialmente desativar o botão até o SDK carregar
+        document.getElementById('facebook-login').addEventListener('click', function(e) {
+            if (typeof FB === 'undefined') {
+                e.preventDefault();
+                alert('Facebook SDK ainda não carregou. Aguarde um momento.');
+            }
+        });
+
+        // Botão do Google
+        document.getElementById('google-login').addEventListener('click', function() {
+            alert('Login com Google será implementado em breve');
         });
     </script>
 </body>
