@@ -12,10 +12,16 @@
     <!-- Barra de navegação -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">Sistema Padaria</a>
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">
+                <i class="fas fa-bread-slice"></i> Sistema Padaria
+            </a>
             <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">Olá, {{ usuario.nome }}</span>
-                <a class="btn btn-outline-light btn-sm" href="{{ url_for('main.logout') }}">Sair</a>
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user"></i> Olá, {{ usuario.nome }}
+                </span>
+                <a class="btn btn-outline-light btn-sm" href="{{ url_for('main.logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
             </div>
         </div>
     </nav>
@@ -32,9 +38,16 @@
             {% else %}
             {% for cat, produtos in dados.categorias.items() %}
             <div class="categoria">
-                <h2 class="categoria-titulo">{{ cat }}</h2>
+                <h2 class="categoria-titulo">
+                    <i class="fas fa-{% if 'bebida' in cat|lower or 'suco' in cat|lower or 'refrigerante' in cat|lower %}glass-martini-alt{% elif 'sobremesa' in cat|lower or 'doce' in cat|lower or 'bolo' in cat|lower %}ice-cream{% elif 'salgado' in cat|lower or 'salgadinho' in cat|lower %}drumstick-bite{% elif 'pao' in cat|lower or 'pão' in cat|lower or 'bread' in cat|lower %}bread-slice{% elif 'cafe' in cat|lower or 'café' in cat|lower or 'coffee' in cat|lower %}coffee{% elif 'lanche' in cat|lower or 'sanduiche' in cat|lower %}hamburger{% elif 'torta' in cat|lower or 'pie' in cat|lower %}chart-pie{% else %}folder{% endif %}"></i> 
+                    {{ cat }}
+                    <span class="contador-categoria">{{ produtos.disponiveis|length + produtos.indisponiveis|length }}</span>
+                </h2>
 
-                <h3 class="status-titulo"><i class="fas fa-check-circle"></i> Disponíveis</h3>
+                <h3 class="status-titulo">
+                    <i class="fas fa-check-circle"></i> Disponíveis
+                    <span class="contador-status">{{ produtos.disponiveis|length }}</span>
+                </h3>
                 <div class="produtos-grid">
                     {% if produtos.disponiveis %}
                     {% for p in produtos.disponiveis %}
@@ -48,7 +61,10 @@
                     {% endif %}
                 </div>
 
-                <h3 class="status-titulo indisponivel"><i class="fas fa-times-circle"></i> Indisponíveis</h3>
+                <h3 class="status-titulo indisponivel">
+                    <i class="fas fa-times-circle"></i> Indisponíveis
+                    <span class="contador-status">{{ produtos.indisponiveis|length }}</span>
+                </h3>
                 <div class="produtos-grid">
                     {% if produtos.indisponiveis %}
                     {% for p in produtos.indisponiveis %}
@@ -74,6 +90,7 @@
     </button>
 
     <script>
+        // O restante do seu script permanece igual
         const themeToggle = document.getElementById('themeToggle');
         const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
         const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
@@ -86,8 +103,14 @@
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             updateThemeIcon(newTheme);
+            
             themeToggle.style.transform = 'scale(0.9)';
             setTimeout(() => themeToggle.style.transform = 'scale(1)', 100);
+            
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple-effect');
+            themeToggle.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
         });
 
         function updateThemeIcon(theme) {
@@ -101,6 +124,13 @@
                 document.body.setAttribute('data-theme', newTheme);
                 updateThemeIcon(newTheme);
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const categorias = document.querySelectorAll('.categoria');
+            categorias.forEach((categoria, index) => {
+                categoria.style.animationDelay = `${0.1 + (index * 0.1)}s`;
+            });
         });
     </script>
 </body>

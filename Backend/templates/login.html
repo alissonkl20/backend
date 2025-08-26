@@ -25,30 +25,32 @@
                     <input placeholder="PASSWORD" id="password" name="password" class="input" type="password" required />
                     <a href="#">Forgot password?</a>
                 </div>
-                <div id="footer-area">
-                    <button type="submit">Log In</button>
-                    
-                    <!-- Divisor entre formulário e login social -->
-                    <div class="divider">
-                        <span>ou</span>
-                    </div>
-                    
-                    <!-- Botão de login com Facebook -->
-                    <button type="button" id="facebook-login" class="social-login-btn">
-                        <i class="fab fa-facebook-f"></i> Continuar com Facebook
-                    </button>
-                    
-                    <div id="text-inside">
-                        <p>Don't have an account?</p>
-                        <a id="link" href="{{ url_for('main.cadastro_usuario') }}">Sign Up</a>
-                    </div>
-                </div>
-                <div id="background-color"></div>
-                <div id="whitefilter"></div>
-                <div id="link-circle">
-                    <i class="fab fa-facebook-f"></i>
-                    <i class="fab fa-instagram"></i>
-                    <i class="fab fa-linkedin-in"></i>
+               <div id="footer-area">
+    <button type="submit">Log In</button>
+    
+    <!-- Divisor entre formulário e login social -->
+    <div class="divider">
+        <span>ou</span>
+    </div>
+    
+    <!-- Container para os botões sociais -->
+    <div class="social-buttons-container">
+        <!-- Botão de login com Facebook -->
+        <button type="button" id="facebook-login" class="social-login-btn">
+            <i class="fab fa-facebook-f"></i> 
+        </button>
+
+        <!-- Botão de login com Google -->
+        <button type="button" id="google-login" class="social-login-btn">
+            <i class="fab fa-google"></i> 
+        </button>
+    </div>
+    
+    <div id="text-inside">
+        <p>Don't have an account?</p>
+        <a id="link" href="{{ url_for('main.cadastro_usuario') }}">Sign Up</a>
+    </div>
+</div>
                 </div>
             </form>
         </div>

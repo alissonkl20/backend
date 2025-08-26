@@ -33,6 +33,11 @@
                         <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
                         <span class="floating-label">Preço (R$) *</span>
                     </div>
+
+                    <div class="form-group">
+                        <input type="number" id="quantidade" name="quantidade" class="form-control" step="1" min="0" placeholder=" " inputmode="numeric">
+                        <span class="floating-label">Quantidade em Estoque</span>
+                    </div> <!-- FIX: Fechando a div que estava aberta -->
                     
                     <div class="form-group">
                         <div class="checkbox-group">
@@ -97,6 +102,11 @@
             
             // Adiciona efeito de foco aos inputs
             document.querySelectorAll('.form-control').forEach(input => {
+                // Verifica se já tem valor para manter o label ativo
+                if (input.value) {
+                    input.parentElement.classList.add('focused');
+                }
+                
                 input.addEventListener('focus', function() {
                     this.parentElement.classList.add('focused');
                 });
@@ -116,7 +126,10 @@
                     headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
                 });
                 
-                if (!resp.ok) throw new Error(`Erro ao carregar categorias: ${resp.status}`);
+                if (!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro ${resp.status}: ${errorText}`);
+                }
                 
                 const categorias = await resp.json();
                 
@@ -198,11 +211,17 @@
                 const resp = await fetch(`${API_BASE_URL}/produtos/${id}`,{
                     headers:{'Content-Type':'application/json','Accept':'application/json'}
                 });
-                if(!resp.ok) throw new Error(`Erro ao carregar produto: ${resp.status}`);
+                
+                if(!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro ${resp.status}: ${errorText}`);
+                }
+                
                 const data = await resp.json();
                 document.getElementById('id').value = data.id;
                 document.getElementById('nome').value = data.nome;
                 document.getElementById('preco').value = data.preco;
+                document.getElementById('quantidade').value = data.quantidade || '';
                 document.getElementById('disponivel').checked = data.disponivel;
                 document.getElementById('categoria').value = data.categoria_id || '';
                 document.getElementById('formTitle').textContent='Edição de Produto';
@@ -221,14 +240,22 @@
             }
         }
 
+        // ---------------------- Carregar Categorias de Produtos ----------------------
         async function loadProductCategories(){
             const list = document.getElementById('productCategoriesList');
             list.innerHTML='<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
+            
             try{
                 const resp = await fetch(`${API_BASE_URL}/produtos`);
-                if(!resp.ok) throw new Error(`Erro ao carregar produtos: ${resp.status}`);
+                
+                if(!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro ${resp.status}: ${errorText}`);
+                }
+                
                 const produtos = await resp.json();
-                if(produtos.length===0){
+                
+                if(produtos.length === 0){
                     list.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>';
                     return;
                 }
@@ -236,68 +263,94 @@
                 // Ordena produtos por ID
                 produtos.sort((a, b) => a.id - b.id);
                 
-                const agrupado={};
-                produtos.forEach(p=>{
-                    const idCat=p.categoria_id || 'sem-categoria';
-                    const nomeCat=CATEGORIAS[idCat] || 'Outros';
-                    if(!agrupado[nomeCat]) agrupado[nomeCat]=[];
+                const agrupado = {};
+                produtos.forEach(p => {
+                    const idCat = p.categoria_id || 'sem-categoria';
+                    const nomeCat = CATEGORIAS[idCat] || 'Outros';
+                    if(!agrupado[nomeCat]) agrupado[nomeCat] = [];
                     agrupado[nomeCat].push(p);
                 });
 
                 const categorias = Object.keys(agrupado).sort();
-                list.innerHTML='';
-                categorias.forEach(cat=>{
-                    const div=document.createElement('div');
-                    div.className='category-container';
-                    const header=document.createElement('div');
-                    header.className='category-header';
-                    header.innerHTML=`${cat} <i class="fas fa-chevron-down"></i>`;
-                    const ul=document.createElement('ul');
-                    ul.className='product-list';
+                list.innerHTML = '';
+                
+                // Adicionar contador total de produtos
+                const totalHeader = document.createElement('div');
+                totalHeader.className = 'total-count';
+                totalHeader.innerHTML = `<i class="fas fa-clipboard-list"></i> Total de produtos: ${produtos.length}`;
+                list.appendChild(totalHeader);
+                
+                categorias.forEach(cat => {
+                    const div = document.createElement('div');
+                    div.className = 'category-container';
+                    
+                    // Adicionar contador de produtos na categoria
+                    const productCount = agrupado[cat].length;
+                    
+                    const header = document.createElement('div');
+                    header.className = 'category-header';
+                    header.innerHTML = `${cat} <span class="product-count">(${productCount})</span> <i class="fas fa-chevron-down"></i>`;
+                    
+                    const ul = document.createElement('ul');
+                    ul.className = 'product-list';
                     
                     // Ordena produtos dentro da categoria por ID
-                    agrupado[cat].sort((a, b) => a.id - b.id).forEach(p=>{
-                        const li=document.createElement('li');
-                        li.className='product-item';
-                        li.innerHTML=`<span class="product-name">${p.nome}</span>
-                                    <span class="product-price">R$ ${p.preco.toFixed(2)}</span>
-                                    <span class="product-status ${p.disponivel?'status-available':'status-unavailable'}">${p.disponivel?'Disponível':'Indisponível'}</span>`;
+                    agrupado[cat].sort((a, b) => a.id - b.id).forEach(p => {
+                        const li = document.createElement('li');
+                        li.className = 'product-item';
+                        li.innerHTML = `<span class="product-name">${p.nome}</span>
+                                      <span class="product-price">R$ ${p.preco.toFixed(2)}</span>
+                                      <span class="product-status ${p.disponivel?'status-available':'status-unavailable'}">${p.disponivel?'Disponível':'Indisponível'}</span>`;
                         ul.appendChild(li);
                     });
-                    header.addEventListener('click',()=>{
+                    
+                    header.addEventListener('click', () => {
                         header.classList.toggle('collapsed');
                         ul.classList.toggle('collapsed');
                     });
+                    
                     div.appendChild(header);
                     div.appendChild(ul);
                     list.appendChild(div);
                 });
-            }catch(err){
-                list.innerHTML='<div class="error-state"><i class="fas fa-exclamation-circle"></i> Erro ao carregar cardápio</div>';
-                console.error(err);
+                
+            } catch(err) {
+                console.error('Erro ao carregar produtos:', err);
+                list.innerHTML = `<div class="error-state">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    Erro ao carregar cardápio: ${err.message}
+                    <button onclick="loadProductCategories()" class="retry-btn">
+                        <i class="fas fa-redo"></i> Tentar novamente
+                    </button>
+                </div>`;
             }
         }
 
         // ---------------------- Helpers ----------------------
         function showMessage(text, success){
-            const msg=document.getElementById('message');
-            msg.textContent=text;
-            msg.className=success?'message success':'message error';
-            msg.style.display='block';
-            msg.classList.add('animate__animated','animate__fadeIn');
-            setTimeout(()=> msg.style.display='none',5000);
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = success ? 'message success' : 'message error';
+            msg.style.display = 'block';
+            msg.classList.add('animate__animated', 'animate__fadeIn');
+            setTimeout(() => {
+                msg.style.display = 'none';
+                msg.classList.remove('animate__animated', 'animate__fadeIn');
+            }, 5000);
         }
 
         function handleSubmit(){
-            const id=document.getElementById('id').value;
+            const id = document.getElementById('id').value;
             id ? updateProduct(id) : submitForm();
         }
 
         // ---------------------- Cadastrar ----------------------
         async function submitForm(){
-            const btn=document.getElementById('submitBtn');
-            btn.disabled=true; 
-            btn.innerHTML='<i class="fas fa-spinner fa-spin"></i><span>Enviando...</span>';
+            const btn = document.getElementById('submitBtn');
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando...</span>';
             
             try{
                 const categoriaValue = document.getElementById('categoria').value.trim();
@@ -305,25 +358,32 @@
                 // Validação de categoria
                 if (!categoriaValue) {
                     showMessage('✖ Por favor, selecione uma categoria', false);
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-plus-circle"></i><span id="buttonText">Cadastrar Produto</span>';
                     return;
                 }
                 
-                const data={
-                    nome:document.getElementById('nome').value.trim(),
-                    preco:parseFloat(document.getElementById('preco').value),
-                    disponivel:document.getElementById('disponivel').checked,
+                const data = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    quantidade: parseInt(document.getElementById('quantidade').value) || 0,
+                    disponivel: document.getElementById('disponivel').checked,
                     categoria_id: parseInt(categoriaValue)
                 };
                 
-                if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-                if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+                // Validações
+                if(!data.nome || data.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                if(isNaN(data.preco) || data.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+                if(isNaN(data.quantidade) || data.quantidade < 0) {
+                    throw new Error('Quantidade deve ser um número positivo');
+                }
 
-                const resp=await fetch(`${API_BASE_URL}/produtos`,{
-                    method:'POST',
-                    headers:{'Content-Type':'application/json','Accept':'application/json'},
-                    body:JSON.stringify(data)
+                const resp = await fetch(`${API_BASE_URL}/produtos`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify(data)
                 });
                 
                 if(!resp.ok) {
@@ -331,8 +391,8 @@
                     throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
                 }
                 
-                const result=await resp.json();
-                showMessage('✔ Produto cadastrado com sucesso! ID: '+(result.id||'Novo'),true);
+                const result = await resp.json();
+                showMessage('✔ Produto cadastrado com sucesso! ID: ' + (result.id || 'Novo'), true);
                 document.getElementById('productForm').reset();
                 
                 // Reset dos labels flutuantes
@@ -340,22 +400,30 @@
                     group.classList.remove('focused');
                 });
                 
-                document.querySelector('.form-container').style.animation='glow 0.5s 3 alternate';
+                document.querySelector('.form-container').style.animation = 'glow 0.5s 3 alternate';
+                setTimeout(() => {
+                    document.querySelector('.form-container').style.animation = '';
+                }, 1500);
+                
+                // Recarregar a lista de produtos
                 loadProductCategories();
-            }catch(err){
-                showMessage(`✖ Falha ao cadastrar: ${err.message}`,false);
+                
+            } catch(err) {
+                showMessage(`✖ Falha ao cadastrar: ${err.message}`, false);
                 console.error(err);
-            }finally{
-                btn.disabled=false; 
-                btn.innerHTML='<i class="fas fa-plus-circle"></i><span id="buttonText">Cadastrar Produto</span>';
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = originalHtml;
             }
         }
 
         // ---------------------- Atualizar por ID ----------------------
         async function updateProduct(id){
-            const btn=document.getElementById('submitBtn');
-            btn.disabled=true; 
-            btn.innerHTML='<i class="fas fa-spinner fa-spin"></i><span>Atualizando...</span>';
+            const btn = document.getElementById('submitBtn');
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Atualizando...</span>';
             
             try{
                 const categoriaValue = document.getElementById('categoria').value.trim();
@@ -363,25 +431,32 @@
                 // Validação de categoria
                 if (!categoriaValue) {
                     showMessage('✖ Por favor, selecione uma categoria', false);
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-sync-alt"></i><span id="buttonText">Atualizar Produto</span>';
                     return;
                 }
                 
-                const data={
-                    nome:document.getElementById('nome').value.trim(),
-                    preco:parseFloat(document.getElementById('preco').value),
-                    disponivel:document.getElementById('disponivel').checked,
+                const data = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    quantidade: parseInt(document.getElementById('quantidade').value) || 0,
+                    disponivel: document.getElementById('disponivel').checked,
                     categoria_id: parseInt(categoriaValue)
                 };
                 
-                if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-                if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+                // Validações
+                if(!data.nome || data.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                if(isNaN(data.preco) || data.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+                if(isNaN(data.quantidade) || data.quantidade < 0) {
+                    throw new Error('Quantidade deve ser um número positivo');
+                }
 
-                const resp=await fetch(`${API_BASE_URL}/produtos/${id}`,{
-                    method:'PUT',
-                    headers:{'Content-Type':'application/json','Accept':'application/json'},
-                    body:JSON.stringify(data)
+                const resp = await fetch(`${API_BASE_URL}/produtos/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify(data)
                 });
                 
                 if(!resp.ok) {
@@ -389,15 +464,21 @@
                     throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
                 }
                 
-                showMessage('✔ Produto atualizado com sucesso!',true);
-                document.querySelector('.form-container').style.animation='glow 0.5s 3 alternate';
+                showMessage('✔ Produto atualizado com sucesso!', true);
+                document.querySelector('.form-container').style.animation = 'glow 0.5s 3 alternate';
+                setTimeout(() => {
+                    document.querySelector('.form-container').style.animation = '';
+                }, 1500);
+                
+                // Recarregar a lista de produtos
                 loadProductCategories();
-            }catch(err){
-                showMessage(`✖ Falha ao atualizar: ${err.message}`,false);
+                
+            } catch(err) {
+                showMessage(`✖ Falha ao atualizar: ${err.message}`, false);
                 console.error(err);
-            }finally{
-                btn.disabled=false; 
-                btn.innerHTML='<i class="fas fa-sync-alt"></i><span id="buttonText">Atualizar Produto</span>';
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = originalHtml;
             }
         }
     </script>

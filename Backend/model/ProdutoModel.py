@@ -24,6 +24,7 @@ class ProdutoModel(db.Model):
             'id': self.id,
             'nome': self.nome,
             'preco': float(self.preco),
+            'quantidade': int(self.quantidade) if isinstance(self.quantidade, Decimal) else self.quantidade,
             'disponivel': self.disponivel,
             'descricao': self.descricao,
             'categoria_id': self.categoria_id,
