@@ -1,0 +1,79 @@
+/* ===== VARIÁVEIS DE TEMA ===== */
+:root {
+  /* ===== LIGHT THEME - CORES VIVAS E VIBRANTES ===== */
+  --bg-color: #ffffff;
+  --text-color: #2d3748;
+  --primary-color: #ff6b35;
+  --secondary-color: #00c897;
+  --danger-color: #ff4757;
+  --warning-color: #ffd166;
+  --info-color: #118ab2;
+  --success-color: #06d6a0;
+  
+  --card-bg: #f8fafc;
+  --card-shadow: 0 10px 25px rgba(255, 107, 53, 0.15);
+  --border-color: #e2e8f0;
+  --hover-color: #edf2f7;
+  --input-bg: #ffffff;
+  
+  /* Gradientes vibrantes */
+  --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+  --gradient-secondary: linear-gradient(135deg, #00c897 0%, #00e3ae 100%);
+  
+  /* Efeitos glow */
+  --glow-primary: 0 0 20px rgba(255, 107, 53, 0.4);
+  --glow-secondary: 0 0 20px rgba(0, 200, 151, 0.4);
+  
+  /* Ícones */
+  --icon-color: #4a5568;
+  --icon-hover: #ff6b35;
+}
+
+[data-theme="dark"] {
+  /* ===== DARK THEME - PRETO TOTAL COM DESTAQUES VERMELHOS ===== */
+  --bg-color: #000000;
+  --text-color: #e2e8f0;
+  --primary-color: #dc2626;
+  --secondary-color: #ef4444;
+  --danger-color: #ff4757;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;
+  --success-color: #10b981;
+  
+  --card-bg: #0a0a0a;
+  --card-shadow: 0 10px 25px rgba(220, 38, 38, 0.4);
+  --border-color: #333333;
+  --hover-color: #1a1a1a;
+  --input-bg: #000000;
+  
+  /* Gradientes Vermelhos */
+  --gradient-primary: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  --gradient-secondary: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
+  
+  /* Glow Vermelho */
+  --glow-primary: 0 0 30px rgba(220, 38, 38, 0.8);
+  --glow-secondary: 0 0 30px rgba(239, 68, 68, 0.8);
+  
+  /* Ícones */
+  --icon-color: #dc2626;
+  --icon-hover: #ef4444;
+}
+
+/* ===== RESET E ESTILOS BASE ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
