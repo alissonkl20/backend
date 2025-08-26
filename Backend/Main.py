@@ -1,15 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_cors import CORS
-from flask_migrate import Migrate
+from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from datetime import datetime
+from sqlalchemy import inspect, text
 
 # Blueprints
 from controller.CategoriaController import categoria_bp
-from controller.ProdutoController import produto_bp, get_cardapio_data
+from controller.ProdutoController import produto_bp
 
 # Extensões
 from extensions import db
@@ -19,159 +19,295 @@ from model.ProdutoModel import ProdutoModel
 from model.CategoriaModel import CategoriaModel
 from model.UserModel import UsuarioModel
 
+# Repositórios
+from repository.CategoriaRepository import CategoriaRepository
+
 # Carrega variáveis do .env apenas em desenvolvimento
-if os.environ.get("RENDER") is None:
-    env_path = Path(__file__).parent / ".env"
-    load_dotenv(dotenv_path=env_path, override=True)
+if not os.environ.get("RENDER"):
+    load_dotenv(Path(__file__).parent / ".env", override=True)
 
-def create_app():
-    app = Flask(__name__, template_folder="templates")
+# Configuração do app
+app = Flask(__name__, template_folder="templates")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "chave-secreta-padrao-mude-isso")
 
-    # Configuração de segurança
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "chave-secreta-padrao-mude-isso")
+# Configuração do banco
+database_url = os.environ.get("DATABASE_URL", "").replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url or "sqlite:///database.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # Configuração do banco
-    database_url = os.environ.get("DATABASE_URL")
-    if database_url:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    else:
-        app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+# Inicializa extensões
+db.init_app(app)
+bcrypt = Bcrypt(app)
 
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+login_manager = LoginManager(app)
+login_manager.login_view = "main.login"
+login_manager.login_message = "Por favor, faça login para acessar esta página."
 
-    # Inicializa extensões
-    db.init_app(app)
-    CORS(app)
-    Migrate(app, db)
+@login_manager.user_loader
+def load_user(user_id):
+    return UsuarioModel.query.get(int(user_id))
 
-    bcrypt = Bcrypt(app)
-    login_manager = LoginManager(app)
-    login_manager.login_view = "login"
-    login_manager.login_message = "Por favor, faça login para acessar esta página."
+# Blueprint principal
+main_bp = Blueprint('main', __name__)
 
-    @login_manager.user_loader
-    def load_user(user_id):
-        return UsuarioModel.query.get(int(user_id))
-
+# ========== FUNÇÕES AUXILIARES ==========
+def check_database():
+    """Verifica e corrige estrutura do banco"""
     with app.app_context():
-        db.create_all()
-        print("✅ Tabelas criadas/verificadas!")
-        
-        # DEBUG: Verificar usuários no banco
-        users = UsuarioModel.query.all()
-        print(f"📊 Usuários no banco: {len(users)}")
-        for user in users:
-            print(f"👤 Usuário: {user.email}")
-
-    # Blueprints
-    app.register_blueprint(categoria_bp)
-    app.register_blueprint(produto_bp)
-
-    # Rotas de autenticação
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if current_user.is_authenticated:
-            return redirect(url_for("dashboard"))
-
-        if request.method == "POST":
-            email = request.form.get("email")
-            password_sha256 = request.form.get("password")  # já vem SHA-256 do frontend
-
-            # DEBUG: Log dos dados recebidos
-            print(f"🔐 Tentativa de login - Email: {email}")
-            print(f"🔐 Senha SHA-256 recebida: {password_sha256}")
-
-            user = UsuarioModel.query.filter_by(email=email).first()
-            print(f"👤 Usuário encontrado: {user is not None}")
-
-            # Comparar bcrypt(SHA-256) com hash do banco
-            if user:
-                print(f"🔑 Hash do banco: {user.senha}")
-                password_match = bcrypt.check_password_hash(user.senha, password_sha256)
-                print(f"✅ Verificação bcrypt: {password_match}")
-                
-                if password_match:
-                    login_user(user)
-                    next_page = request.args.get("next")
-                    flash("Login realizado com sucesso!", "success")
-                    print("🎉 Login bem-sucedido! Redirecionando...")
-                    return redirect(next_page or url_for("dashboard"))
+        try:
+            inspector = inspect(db.engine)
             
-            # Se chegou aqui, o login falhou
-            flash("Login falhou. Verifique seu email e senha.", "danger")
-            print("❌ Login falhou")
-
-        return render_template("login.html")
-
-    @app.route("/cadastro_usuario", methods=["GET", "POST"])
-    def cadastro_usuario():
-        if current_user.is_authenticated:
-            return redirect(url_for("dashboard"))
-
-        if request.method == "POST":
-            nome = request.form.get("nome")
-            email = request.form.get("email")
-            senha_sha256 = request.form.get("password")  # já vem SHA-256
-            confirmar_sha256 = request.form.get("confirm_password")
-
-            if senha_sha256 != confirmar_sha256:
-                flash("As senhas não coincidem.", "danger")
-                return render_template("cadastro.html")
-
-            if UsuarioModel.query.filter_by(email=email).first():
-                flash("Este email já está em uso.", "danger")
-                return render_template("cadastro.html")
-
-            # Salvar bcrypt(SHA-256)
-            hashed_password = bcrypt.generate_password_hash(senha_sha256).decode("utf-8")
-            novo_usuario = UsuarioModel(nome=nome, email=email, senha=hashed_password)
-
-            db.session.add(novo_usuario)
+            if 'usuarios' not in inspector.get_table_names():
+                db.create_all()
+                return True
+            
+            columns = [col['name'] for col in inspector.get_columns('usuarios')]
+            
+            # Adicionar colunas faltantes
+            if 'facebook_login' not in columns:
+                db.session.execute(text('ALTER TABLE usuarios ADD COLUMN facebook_login BOOLEAN DEFAULT FALSE'))
+            if 'facebook_id' not in columns:
+                db.session.execute(text('ALTER TABLE usuarios ADD COLUMN facebook_id VARCHAR(100)'))
+            
             db.session.commit()
+            db.create_all()
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro no banco: {e}")
+            db.drop_all()
+            db.create_all()
+            return True
 
-            flash("Conta criada com sucesso! Faça login.", "success")
-            return redirect(url_for("login"))
+def get_cardapio_data():
+    """Obtém dados do cardápio formatados"""
+    try:
+        produtos = ProdutoModel.query.filter_by(usuario_id=current_user.id).all()
+        categorias = {}
+        
+        for produto in produtos:
+            if produto.categoria:
+                nome_cat = produto.categoria.nome
+                if nome_cat not in categorias:
+                    categorias[nome_cat] = {'disponiveis': [], 'indisponiveis': []}
+                
+                item = {
+                    'id': produto.id,
+                    'nome': produto.nome, 
+                    'preco': float(produto.preco),
+                    'descricao': produto.descricao
+                }
+                
+                if produto.disponivel:
+                    categorias[nome_cat]['disponiveis'].append(item)
+                else:
+                    categorias[nome_cat]['indisponiveis'].append(item)
 
-        return render_template("cadastro.html")
+        return {
+            'atualizado_em': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+            'categorias': categorias,
+            'total_produtos': len(produtos),
+            'usuario': current_user.nome
+        }
 
-    @app.route("/logout")
-    @login_required
-    def logout():
-        logout_user()
-        flash("Você foi desconectado.", "info")
-        return redirect(url_for("login"))
+    except Exception as e:
+        print(f"❌ Erro ao carregar cardápio: {str(e)}")
+        return {'erro': 'Erro ao carregar cardápio'}
 
-    # Rotas protegidas
-    @app.route("/")
-    @app.route("/dashboard")
-    @login_required
-    def dashboard():
-        return render_template("dashboard.html", usuario=current_user)
+# ========== ROTAS DE AUTENTICAÇÃO ==========
+@main_bp.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
 
-    @app.route("/create_product", methods=["GET", "POST"])
-    @login_required
-    def create_product():
-        if request.method == "POST":
-            # TODO: lógica de criação de produto
-            pass
-        return render_template("create_product.html", usuario=current_user)
+    if request.method == "POST":
+        email = request.form.get("email")
+        password_sha256 = request.form.get("password")
+        user = UsuarioModel.query.filter_by(email=email).first()
 
-    @app.route("/cadastro")
-    def cadastro_redirect():
-        return redirect(url_for("create_product"))
+        if user and user.facebook_login:
+            flash("Use o botão 'Continuar com Facebook'.", "warning")
+            return render_template("login.html")
 
-    @app.route("/cardapio")
-    @login_required
-    def cardapio_html():
-        dados = get_cardapio_data()
-        return render_template("cardapio.html", dados=dados, usuario=current_user)
+        if user and user.senha and bcrypt.check_password_hash(user.senha, password_sha256):
+            login_user(user)
+            flash("Login realizado com sucesso!", "success")
+            return redirect(request.args.get("next") or url_for("main.dashboard"))
+        
+        flash("Login falhou. Verifique seu email e senha.", "danger")
 
-    return app
+    return render_template("login.html")
 
-# Instância para o Gunicorn
-app = create_app()
+@main_bp.route("/facebook-login", methods=["POST"])
+def facebook_login():
+    try:
+        data = request.get_json()
+        access_token = data.get('accessToken')
+        email = data.get('email')
+        name = data.get('name')
+        facebook_id = data.get('id')
+        
+        if not all([email, name, facebook_id]):
+            return jsonify({'success': False, 'message': 'Dados incompletos'}), 400
+        
+        # Verificar usuário normal com mesmo email
+        if UsuarioModel.query.filter_by(email=email, facebook_login=False).first():
+            return jsonify({'success': False, 'message': 'Email já cadastrado com login normal'}), 400
+        
+        user = UsuarioModel.query.filter_by(facebook_id=facebook_id).first()
+        
+        if not user:
+            user = UsuarioModel.query.filter_by(email=email).first()
+            if user:
+                user.facebook_login = True
+                user.facebook_id = facebook_id
+                user.senha = None
+            else:
+                user = UsuarioModel(
+                    nome=name, email=email, senha=None,
+                    facebook_login=True, facebook_id=facebook_id
+                )
+                db.session.add(user)
+            
+            db.session.commit()
+        
+        login_user(user)
+        return jsonify({'success': True, 'redirect': url_for('main.dashboard')})
+        
+    except Exception as e:
+        print(f"❌ Erro no login Facebook: {str(e)}")
+        return jsonify({'success': False, 'message': 'Erro no servidor'}), 500
+
+@main_bp.route("/cadastro_usuario", methods=["GET", "POST"])
+def cadastro_usuario():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.dashboard"))
+
+    if request.method == "POST":
+        nome = request.form.get("nome")
+        email = request.form.get("email")
+        senha_sha256 = request.form.get("password")
+        confirmar_sha256 = request.form.get("confirm_password")
+
+        if senha_sha256 != confirmar_sha256:
+            flash("As senhas não coincidem.", "danger")
+            return render_template("cadastro.html")
+
+        if UsuarioModel.query.filter_by(email=email).first():
+            flash("Este email já está em uso.", "danger")
+            return render_template("cadastro.html")
+
+        hashed_password = bcrypt.generate_password_hash(senha_sha256).decode("utf-8")
+        novo_usuario = UsuarioModel(nome=nome, email=email, senha=hashed_password)
+        db.session.add(novo_usuario)
+        db.session.commit()
+
+        flash("Conta criada com sucesso! Faça login.", "success")
+        return redirect(url_for("main.login"))
+
+    return render_template("cadastro.html")
+
+@main_bp.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Você foi desconectado.", "info")
+    return redirect(url_for("main.login"))
+
+# ========== ROTAS PRINCIPAIS ==========
+@main_bp.route("/")
+@main_bp.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html", usuario=current_user)
+
+@main_bp.route("/create_product")
+@login_required
+def create_product():
+    categorias = CategoriaModel.query.filter_by(usuario_id=current_user.id).all()
+    return render_template("create_product.html", categorias=categorias)
+
+@main_bp.route("/cardapio")
+@login_required
+def cardapio_html():
+    dados = get_cardapio_data()
+    return render_template("cardapio.html", dados=dados)
+
+# ========== ROTAS DE CATEGORIAS ==========
+@main_bp.route('/categorias')
+@login_required
+def categorias_page():
+    categorias = CategoriaRepository.listar_por_usuario(current_user.id)
+    return render_template("categorias.html", categorias=categorias)
+
+@main_bp.route('/create_categoria', methods=['GET', 'POST'])
+@login_required
+def create_categoria():
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        descricao = request.form.get('descricao', '')
+        
+        if not nome:
+            flash('Nome da categoria é obrigatório', 'error')
+            return render_template("create_categoria.html")
+        
+        if CategoriaRepository.existe_por_nome_e_usuario(nome, current_user.id):
+            flash('Já existe uma categoria com este nome', 'error')
+            return render_template("create_categoria.html")
+        
+        categoria = CategoriaModel(nome=nome, descricao=descricao, usuario_id=current_user.id)
+        CategoriaRepository.salvar(categoria)
+        
+        flash('Categoria criada com sucesso!', 'success')
+        return redirect(url_for('main.categorias_page'))
+    
+    return render_template("create_categoria.html")
+
+@main_bp.route('/edit_categoria/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_categoria(id):
+    categoria = CategoriaRepository.buscar_por_id_e_usuario(id, current_user.id)
+    if not categoria:
+        flash('Categoria não encontrada', 'error')
+        return redirect(url_for('main.categorias_page'))
+    
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        descricao = request.form.get('descricao', '')
+        
+        if not nome:
+            flash('Nome da categoria é obrigatório', 'error')
+            return render_template("edit_categoria.html", categoria=categoria)
+        
+        if nome != categoria.nome and CategoriaRepository.existe_por_nome_e_usuario(nome, current_user.id):
+            flash('Já existe uma categoria com este nome', 'error')
+            return render_template("edit_categoria.html", categoria=categoria)
+        
+        categoria.nome = nome
+        categoria.descricao = descricao
+        CategoriaRepository.salvar(categoria)
+        
+        flash('Categoria atualizada com sucesso!', 'success')
+        return redirect(url_for('main.categorias_page'))
+    
+    return render_template("edit_categoria.html", categoria=categoria)
+
+@main_bp.route('/delete_categoria/<int:id>', methods=['POST'])
+@login_required
+def delete_categoria(id):
+    if CategoriaRepository.deletar_por_id_e_usuario(id, current_user.id):
+        flash('Categoria excluída com sucesso!', 'success')
+    else:
+        flash('Categoria não encontrada', 'error')
+    
+    return redirect(url_for('main.categorias_page'))
+
+# ========== CONFIGURAÇÃO FINAL ==========
+app.register_blueprint(categoria_bp)
+app.register_blueprint(produto_bp)
+app.register_blueprint(main_bp)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    check_database()
+    print("✅ Aplicativo pronto para produção")
+    app.run(host="0.0.0.0", port=5000)

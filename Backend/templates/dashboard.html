@@ -1,52 +1,142 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Controle | Padaria</title>
-    <meta name="color-scheme" content="light dark">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">     
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body data-theme="light">
-    <!-- Barra de navegação -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">Sistema Padaria</a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">Olá, {{ usuario.nome }}</span>
-                <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">Sair</a>
-            </div>
-        </div>
-    </nav>
-
     <div class="container">
-        <header class="header">
-            <h1>Bem-vindo ao Painel da Padaria</h1>
-            <p>Gerencie seu cardápio e produtos de forma fácil e intuitiva</p>
+        <div class="navbar">
+            <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">Sistema Padaria</a>
+            <span class="navbar-text">Olá, {{ current_user.email if current_user.is_authenticated else 'Usuário' }}</span>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('main.logout') }}">Sair</a>
+        </div>
+
+        <header class="header hero">
+            <h1>Painel de Controle</h1>
+            <p>Gerencie seus produtos, categorias e cardápio</p>
         </header>
 
-        <div class="dashboard-grid">
-            <div class="dashboard-card">
-                <i class="fas fa-utensils"></i>
-                <h2>Cardápio</h2>
-                <p>Visualize e gerencie todos os itens do seu cardápio organizados por categorias</p>
-                <a href="/cardapio" class="btn">Acessar Cardápio</a>
-            </div>
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+            <div class="nav-tab" data-tab="categorias">Categorias</div>
+        </div>
 
-            <div class="dashboard-card">
-                <i class="fas fa-plus-circle"></i>
-                <h2>Cadastro</h2>
-                <p>Adicione novos produtos ou edite os existentes em seu cardápio</p>
-                <a href="/cadastro" class="btn">Acessar Cadastro</a>
-            </div>
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="tab-dashboard">
+            <div class="demo-section">
+                <h2>Dashboard</h2>
+                <p>Esta seção mostra os componentes do dashboard principal.</p>
+                
+                <div class="dashboard-grid">
+                    <div class="dashboard-card animate-on-scroll">
+                        <i class="fas fa-utensils"></i>
+                        <h2>Cardápio</h2>
+                        <p>Visualize e gerencie todos os itens do seu cardápio organizados por categorias</p>
+                        <a href="{{ url_for('main.cardapio_html') }}" class="btn btn-primary">Acessar Cardápio</a>
+                    </div>
 
-            <div class="dashboard-card">
-                <i class="fas fa-chart-line"></i>
-                <h2>Relatórios</h2>
-                <p>Visualize relatórios e estatísticas sobre seus produtos (em breve)</p>
-                <a href="#" class="btn" style="opacity: 0.7; cursor: not-allowed;">Em Breve</a>
+                    <div class="dashboard-card animate-on-scroll">
+                        <i class="fas fa-plus-circle"></i>
+                        <h2>Cadastro</h2>
+                        <p>Adicione novos produtos ou edite os existentes em seu cardápio</p>
+                        <a href="{{ url_for('main.create_product') }}" class="btn btn-primary">Acessar Cadastro</a>
+                    </div>
+
+                    <div class="dashboard-card animate-on-scroll">
+                        <i class="fas fa-tags"></i>
+                        <h2>Categorias</h2>
+                        <p>Gerencie as categorias dos seus produtos</p>
+                        <a href="#" class="btn btn-primary" id="goToCategories">Gerenciar Categorias</a>
+                    </div>
+
+                    <div class="dashboard-card animate-on-scroll">
+                        <i class="fas fa-chart-line"></i>
+                        <h2>Relatórios</h2>
+                        <p>Visualize relatórios de vendas e estatísticas dos produtos</p>
+                        <a href="#" class="btn btn-primary">Acessar Relatórios</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categorias Tab -->
+        <div class="tab-content" id="tab-categorias">
+            <div class="demo-section">
+                <h2><i class="fas fa-tags"></i> Gerenciar Categorias</h2>
+                <p>Gerencie as categorias dos seus produtos</p>
+                
+                <div class="action-buttons">
+                    <a href="{{ url_for('main.create_categoria') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nova Categoria
+                    </a>
+                    <a href="#" class="btn btn-secondary" id="backToDashboard">
+                        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                    </a>
+                </div>
+
+                <!-- Mensagens Flash -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-messages">
+                            {% for category, message in messages %}
+                                <div class="flash flash-{{ category }}">
+                                    <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Lista de Categorias -->
+                <div class="categories-list">
+                    <h2>Suas Categorias</h2>
+                    
+                    {% if categorias %}
+                        <div class="categories-grid">
+                            {% for categoria in categorias %}
+                            <div class="category-card animate-on-scroll">
+                                <div class="category-header">
+                                    <h3>{{ categoria.nome }}</h3>
+                                    <div class="category-actions">
+                                        <a href="{{ url_for('main.edit_categoria', id=categoria.id) }}" class="btn-edit">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <form action="{{ url_for('main.delete_categoria', id=categoria.id) }}" method="POST" class="delete-form">
+                                            <button type="submit" class="btn-delete" onclick="return confirm('Tem certeza que deseja excluir esta categoria?')">
+                                                <i class="fas fa-trash"></i> Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="category-body">
+                                    <p class="category-desc">{{ categoria.descricao or 'Sem descrição' }}</p>
+                                    <div class="category-stats">
+                                        <span class="stat">
+                                            <i class="fas fa-box"></i>
+                                            {{ categoria.quantidade_produtos or 0 }} produtos
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-tags"></i>
+                            <h3>Nenhuma categoria encontrada</h3>
+                            <p>Comece criando sua primeira categoria</p>
+                            <a href="{{ url_for('main.create_categoria') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Criar Primeira Categoria
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -55,52 +145,119 @@
         </footer>
     </div>
 
+    <!-- Botão de troca de tema -->
     <button class="theme-toggle" id="themeToggle">
         <i class="fas fa-moon"></i>
     </button>
 
     <script>
-        // Theme Toggle Functionality
+        // Script para alternar entre temas
         const themeToggle = document.getElementById('themeToggle');
-        const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-        const currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark' : 'light');
+        const body = document.body;
         
-        // Apply the current theme
-        document.body.setAttribute('data-theme', currentTheme);
-        updateThemeIcon(currentTheme);
-        
-        // Toggle theme on button click
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            document.body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-            
-            // Add animation
-            themeToggle.style.transform = 'scale(0.9)';
-            setTimeout(() => {
-                themeToggle.style.transform = 'scale(1)';
-            }, 100);
-        });
-        
-        // Update theme icon based on current theme
-        function updateThemeIcon(theme) {
-            const icon = themeToggle.querySelector('i');
-            icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        // Verificar se há um tema salvo no localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            body.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
         }
         
-        // Watch for system theme changes
-        prefersDarkScheme.addEventListener('change', e => {
-            if (!localStorage.getItem('theme')) {
-                const newTheme = e.matches ? 'dark' : 'light';
-                document.body.setAttribute('data-theme', newTheme);
-                updateThemeIcon(newTheme);
-            }
+        // Alternar tema ao clicar no botão
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
         });
+        
+        // Atualizar ícone do botão de tema
+        function updateThemeIcon(theme) {
+            const icon = themeToggle.querySelector('i');
+            if (icon) {
+                icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        }
+        
+        // Navegação por abas
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remover classe active de todas as abas
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Adicionar classe active à aba clicada
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+                
+                // Animar elementos ao trocar de aba
+                animateElementsOnTabChange();
+            });
+        });
+        
+        // Botão para ir para categorias
+        document.getElementById('goToCategories').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('[data-tab="categorias"]').click();
+        });
+        
+        // Botão para voltar ao dashboard
+        document.getElementById('backToDashboard').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('[data-tab="dashboard"]').click();
+        });
+        
+        // Efeito Ripple nos Botões
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple-effect');
+                this.appendChild(ripple);
+                
+                const x = e.clientX - this.getBoundingClientRect().left;
+                const y = e.clientY - this.getBoundingClientRect().top;
+                
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+        
+        // Animar elementos ao rolar a página
+        function animateOnScroll() {
+            const elements = document.querySelectorAll('.animate-on-scroll');
+            elements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                const screenPosition = window.innerHeight * 0.85;
+                
+                if (elementPosition < screenPosition) {
+                    element.classList.add('animated');
+                }
+            });
+        }
+        
+        // Animar elementos ao trocar de aba
+        function animateElementsOnTabChange() {
+            const elements = document.querySelectorAll('.animate-on-scroll');
+            elements.forEach(element => {
+                element.classList.remove('animated');
+            });
+            
+            // Pequeno atraso para garantir que a aba foi trocada
+            setTimeout(() => {
+                animateOnScroll();
+            }, 100);
+        }
+        
+        // Inicializar animações ao carregar a página
+        window.addEventListener('load', () => {
+            animateOnScroll();
+        });
+        
+        // Animar elementos ao rolar
+        window.addEventListener('scroll', animateOnScroll);
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

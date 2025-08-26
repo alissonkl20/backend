@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Categoria | Sistema Padaria</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='create_categorias.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-theme="light">
+    <!-- Botão de troca de tema -->
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="container">
+        <!-- Header com animação -->
+        <div class="header animated-element">
+            <div class="header-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h1>Criar Nova Categoria</h1>
+            <p>Adicione uma nova categoria para organizar seus produtos</p>
+        </div>
+
+        <!-- Mensagens Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }} animated-element">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulário com animação -->
+        <div class="form-container animated-element">
+            <form action="{{ url_for('main.create_categoria') }}" method="POST" id="categoryForm">
+                <div class="form-group">
+                    <label for="nome">
+                        <i class="fas fa-tag"></i> Nome da Categoria *
+                    </label>
+                    <input type="text" id="nome" name="nome" class="form-control" required 
+                           placeholder="Ex: Bebidas, Doces, Salgados">
+                    <div class="form-hint">Máximo 50 caracteres</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">
+                        <i class="fas fa-align-left"></i> Descrição
+                    </label>
+                    <textarea id="descricao" name="descricao" class="form-control" 
+                              rows="4" placeholder="Descreva brevemente esta categoria (opcional)"></textarea>
+                    <div class="form-hint">Máximo 200 caracteres</div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary animated-button">
+                        <i class="fas fa-save"></i> Criar Categoria
+                    </button>
+                    <a href="{{ url_for('main.categorias_page') }}" class="btn btn-secondary animated-button">
+                        <i class="fas fa-times"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Link de voltar com animação -->
+        <a href="{{ url_for('main.categorias_page') }}" class="back-link animated-element">
+            <i class="fas fa-arrow-left"></i> Voltar para Lista de Categorias
+        </a>        
+    </div>
+
+    <!-- Efeito de partículas para background (opcional) -->
+    <div class="background-particles"></div>
+
+    <script>
+        // Verificar se há parâmetros de mensagem na URL
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animação de entrada dos elementos
+            const animatedElements = document.querySelectorAll('.animated-element');
+            animatedElements.forEach((element, index) => {
+                element.style.animationDelay = `${index * 0.1}s`;
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const message = urlParams.get('message');
+            const messageType = urlParams.get('type');
+            
+            if (message && messageType) {
+                // Criar elemento de mensagem flash
+                const flashDiv = document.createElement('div');
+                flashDiv.className = `flash flash-${messageType} animated-element`;
+                flashDiv.innerHTML = `
+                    <i class="fas fa-${messageType === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span>${decodeURIComponent(message)}</span>
+                `;
+                
+                const flashContainer = document.querySelector('.flash-messages') || document.createElement('div');
+                if (!document.querySelector('.flash-messages')) {
+                    flashContainer.className = 'flash-messages';
+                    document.querySelector('.header').after(flashContainer);
+                }
+                
+                flashContainer.appendChild(flashDiv);
+            }
+
+            // Validação do formulário
+            const form = document.getElementById('categoryForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const nome = document.getElementById('nome');
+                    const descricao = document.getElementById('descricao');
+                    
+                    // Validação básica
+                    if (nome.value.trim().length > 50) {
+                        e.preventDefault();
+                        showError('O nome da categoria deve ter no máximo 50 caracteres.');
+                        return;
+                    }
+                    
+                    if (descricao.value.trim().length > 200) {
+                        e.preventDefault();
+                        showError('A descrição deve ter no máximo 200 caracteres.');
+                        return;
+                    }
+                });
+            }
+
+            // Botão de tema
+            const themeToggle = document.getElementById('themeToggle');
+            const body = document.body;
+            
+            // Verificar tema salvo
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                body.setAttribute('data-theme', savedTheme);
+                updateThemeIcon(savedTheme);
+            }
+            
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = body.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+                
+                // Efeito de animação no botão
+                themeToggle.style.transform = 'scale(0.9)';
+                setTimeout(() => themeToggle.style.transform = 'scale(1)', 100);
+            });
+            
+            function updateThemeIcon(theme) {
+                const icon = themeToggle.querySelector('i');
+                icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+
+            function showError(message) {
+                // Criar mensagem de erro
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'flash flash-error animated-element';
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>${message}</span>
+                `;
+                
+                const flashContainer = document.querySelector('.flash-messages') || document.createElement('div');
+                if (!document.querySelector('.flash-messages')) {
+                    flashContainer.className = 'flash-messages';
+                    document.querySelector('.header').after(flashContainer);
+                }
+                
+                flashContainer.appendChild(errorDiv);
+                
+                // Remover após 5 segundos
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>

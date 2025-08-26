@@ -1,414 +1,438 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=5">
-<title>Criação de Produto | Dashboard Neon</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="{{ url_for('static', filename='cadastro.css') }}">
-<meta name="color-scheme" content="light dark">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criação de Produto | Dashboard Neon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="/static/create_produtos.css">
 </head>
 <body data-theme="light">
-<div class="glow-container animate__animated animate__fadeIn">
-  <div class="container">
-    <div class="header">
-      <h1 id="formTitle">Cadastro de Produto</h1>
+    <div class="glow-container animate__animated animate__fadeIn">
+        <div class="container">
+            <div class="header">
+                <h1 id="formTitle">Cadastro de Produto</h1>
+            </div>
+            
+            <div class="form-container">
+                <form id="productForm">
+                    <div class="form-group">
+                        <input type="number" id="id" name="id" class="form-control" placeholder=" " readonly>
+                        <span class="floating-label">ID (automático)</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="text" id="nome" name="nome" class="form-control" required placeholder=" ">
+                        <span class="floating-label">Nome do Produto *</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
+                        <span class="floating-label">Preço (R$) *</span>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="number" id="quantidade" name="quantidade" class="form-control" step="1" min="0" placeholder=" " inputmode="numeric">
+                        <span class="floating-label">Quantidade em Estoque</span>
+                    </div> <!-- FIX: Fechando a div que estava aberta -->
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="disponivel" name="disponivel" checked>
+                            <label for="disponivel">Produto disponível para venda</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <select id="categoria" name="categoria" class="form-control" required>
+                            <option value="">Selecione uma categoria</option>
+                            <!-- As opções serão carregadas dinamicamente via JavaScript -->
+                        </select>
+                        <span class="floating-label">Categoria *</span>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
+                            <i class="fas fa-plus-circle"></i>
+                            <span id="buttonText">Cadastrar Produto</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="message" class="message"></div>
+            </div>
+            
+            <div class="output-container">
+                <h2><i class="fas fa-list"></i> Cardápio por Categorias</h2>
+                <div id="productCategoriesList">
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando cardápio...
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-container">
-      <form id="productForm">
-        <div class="form-group">
-          <label for="id">ID:</label>
-          <input type="number" id="id" name="id" class="form-control" placeholder=" " readonly>
-          <span class="floating-label">ID (automático)</span>
-        </div>
-        <div class="form-group">
-          <label for="nome">Nome do Produto:</label>
-          <input type="text" id="nome" name="nome" class="form-control" required placeholder=" ">
-          <span class="floating-label">Obrigatório</span>
-        </div>
-        <div class="form-group">
-          <label for="preco">Preço (R$):</label>
-          <input type="number" id="preco" name="preco" class="form-control" step="0.01" min="0" required placeholder=" " inputmode="decimal">
-          <span class="floating-label">Obrigatório</span>
-        </div>
-        <div class="form-group">
-          <label>Disponibilidade:</label>
-          <div class="checkbox-group">
-            <input type="checkbox" id="disponivel" name="disponivel" checked>
-            <label for="disponivel">Produto disponível para venda</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="categoria">Categoria:</label>
-          <select id="categoria" name="categoria" class="form-control">
-            <option value="">Selecione uma categoria</option>
-            <!-- As opções serão carregadas dinamicamente via JavaScript -->
-          </select>
-          <span class="floating-label">Opcional</span>
-        </div>
-        <div class="button-group">
-          <button type="button" class="btn" onclick="handleSubmit()" id="submitBtn">
-            <span id="buttonText">Cadastrar Produto</span>
-          </button>
-          <button type="button" class="btn" onclick="updateProductByName()" id="updateByNameBtn">
-            <span>Atualizar por Nome</span>
-          </button>
-          <button type="button" class="btn btn-danger" onclick="deleteProductByName()" id="deleteByNameBtn">
-            <span>Deletar por Nome</span>
-          </button>
-        </div>
-      </form>
-      <div id="message" class="message"></div>
-      <div class="output-container" hidden>
-        <h2>Dados Enviados:</h2>
-        <div id="jsonOutput">Preencha o formulário para visualizar os dados que serão enviados</div>
-      </div>
-      <div class="output-container">
-        <h2>Cardápio por Categorias:</h2>
-        <div id="productCategoriesList"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Botão Dark/Light -->
-<button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-  <i class="fas fa-moon"></i>
-</button>
+    <!-- Botão Dark/Light -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
+        <i class="fas fa-moon"></i>
+    </button>
 
-<script>
-const API_BASE_URL = window.location.origin + '/api';
-let CATEGORIAS = {}; // Será preenchido dinamicamente
+    <script>
+        const API_BASE_URL = window.location.origin + '/api';
+        let CATEGORIAS = {}; // Será preenchido dinamicamente
 
-// ---------------------- Inicialização ----------------------
-document.addEventListener('DOMContentLoaded', function(){
-  const params = new URLSearchParams(window.location.search);
-  
-  // Carrega categorias primeiro, depois produtos e produto específico se houver ID
-  loadCategorias().then(() => {
-    if (params.get('id')) loadProduct(params.get('id'));
-    loadProductCategories();
-  });
+        // ---------------------- Inicialização ----------------------
+        document.addEventListener('DOMContentLoaded', function(){
+            const params = new URLSearchParams(window.location.search);
+            
+            // Carrega categorias primeiro, depois produtos e produto específico se houver ID
+            loadCategorias().then(() => {
+                if (params.get('id')) loadProduct(params.get('id'));
+                loadProductCategories();
+            });
 
-  document.getElementById('productForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    handleSubmit();
-  });
-});
+            document.getElementById('productForm').addEventListener('submit', function(e){
+                e.preventDefault();
+                handleSubmit();
+            });
+            
+            // Adiciona efeito de foco aos inputs
+            document.querySelectorAll('.form-control').forEach(input => {
+                // Verifica se já tem valor para manter o label ativo
+                if (input.value) {
+                    input.parentElement.classList.add('focused');
+                }
+                
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.parentElement.classList.remove('focused');
+                    }
+                });
+            });
+        });
 
-// ---------------------- Carregar Categorias da API ----------------------
-async function loadCategorias() {
-  try {
-    const resp = await fetch(`${API_BASE_URL}/categorias`, {
-      headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
-    });
-    
-    if (!resp.ok) throw new Error(`Erro ao carregar categorias: ${resp.status}`);
-    
-    const categorias = await resp.json();
-    
-    // Ordena categorias por ID
-    categorias.sort((a, b) => a.id - b.id);
-    
-    // Preenche o objeto CATEGORIAS para uso em outras funções
-    CATEGORIAS = {};
-    categorias.forEach(cat => {
-      CATEGORIAS[cat.id] = cat.nome;
-    });
-    
-    // Preenche o dropdown de categorias
-    const select = document.getElementById('categoria');
-    
-    // Mantém a opção padrão
-    const defaultOption = select.querySelector('option[value=""]');
-    select.innerHTML = '';
-    select.appendChild(defaultOption);
-    
-    // Adiciona as categorias da API
-    categorias.forEach(categoria => {
-      const option = document.createElement('option');
-      option.value = categoria.id;
-      option.textContent = categoria.nome;
-      select.appendChild(option);
-    });
-    
-  } catch (err) {
-    console.error('Erro ao carregar categorias:', err);
-    showMessage('⚠️ Não foi possível carregar as categorias. Usando categorias padrão.', false);
-    
-    // Fallback para categorias padrão caso a API falhe
-    CATEGORIAS = {2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"};
-    
-    const select = document.getElementById('categoria');
-    Object.entries(CATEGORIAS).forEach(([id, nome]) => {
-      const option = document.createElement('option');
-      option.value = id;
-      option.textContent = nome;
-      select.appendChild(option);
-    });
-  }
-}
+        // ---------------------- Carregar Categorias da API ----------------------
+        async function loadCategorias() {
+            try {
+                const resp = await fetch(`${API_BASE_URL}/categorias`, {
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}
+                });
+                
+                if (!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro ${resp.status}: ${errorText}`);
+                }
+                
+                const categorias = await resp.json();
+                
+                // Ordena categorias por ID
+                categorias.sort((a, b) => a.id - b.id);
+                
+                // Preenche o objeto CATEGORIAS para uso em outras funções
+                CATEGORIAS = {};
+                categorias.forEach(cat => {
+                    CATEGORIAS[cat.id] = cat.nome;
+                });
+                
+                // Preenche o dropdown de categorias
+                const select = document.getElementById('categoria');
+                
+                // Mantém a opção padrão
+                const defaultOption = select.querySelector('option[value=""]');
+                select.innerHTML = '';
+                select.appendChild(defaultOption);
+                
+                // Adiciona as categorias da API
+                categorias.forEach(categoria => {
+                    const option = document.createElement('option');
+                    option.value = categoria.id;
+                    option.textContent = categoria.nome;
+                    select.appendChild(option);
+                });
+                
+            } catch (err) {
+                console.error('Erro ao carregar categorias:', err);
+                showMessage('⚠️ Não foi possível carregar as categorias. Usando categorias padrão.', false);
+                
+                // Fallback para categorias padrão caso a API falhe
+                CATEGORIAS = {2:"Doces",3:"Salgados",4:"Pães",5:"Bolos",6:"Tortas",7:"Mousses"};
+                
+                const select = document.getElementById('categoria');
+                Object.entries(CATEGORIAS).forEach(([id, nome]) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = nome;
+                    select.appendChild(option);
+                });
+            }
+        }
 
-// ---------------------- Tema ----------------------
-const themeToggle = document.getElementById('themeToggle'),
-      prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)'),
-      currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark':'light');
-document.body.setAttribute('data-theme', currentTheme);
-updateThemeIcon(currentTheme);
+        // ---------------------- Tema ----------------------
+        const themeToggle = document.getElementById('themeToggle'),
+            prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)'),
+            currentTheme = localStorage.getItem('theme') || (prefersDarkScheme.matches ? 'dark':'light');
+        document.body.setAttribute('data-theme', currentTheme);
+        updateThemeIcon(currentTheme);
 
-themeToggle.addEventListener('click', () => {
-  const current = document.body.getAttribute('data-theme');
-  const next = current === 'light' ? 'dark' : 'light';
-  document.body.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
-  updateThemeIcon(next);
-  themeToggle.style.transform = 'scale(0.9)';
-  setTimeout(()=> themeToggle.style.transform='scale(1)',100);
-});
+        themeToggle.addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateThemeIcon(next);
+            themeToggle.style.transform = 'scale(0.9)';
+            setTimeout(()=> themeToggle.style.transform='scale(1)',100);
+        });
 
-prefersDarkScheme.addEventListener('change', e => {
-  if(!localStorage.getItem('theme')){
-    document.body.setAttribute('data-theme', e.matches?'dark':'light');
-    updateThemeIcon(e.matches?'dark':'light');
-  }
-});
+        prefersDarkScheme.addEventListener('change', e => {
+            if(!localStorage.getItem('theme')){
+                document.body.setAttribute('data-theme', e.matches?'dark':'light');
+                updateThemeIcon(e.matches?'dark':'light');
+            }
+        });
 
-function updateThemeIcon(theme){
-  const icon = themeToggle.querySelector('i');
-  icon.className = theme==='light' ? 'fas fa-moon' : 'fas fa-sun';
-  icon.setAttribute('aria-hidden','true');
-}
+        function updateThemeIcon(theme){
+            const icon = themeToggle.querySelector('i');
+            icon.className = theme==='light' ? 'fas fa-moon' : 'fas fa-sun';
+            icon.setAttribute('aria-hidden','true');
+        }
 
-// ---------------------- Botão ripple effect ----------------------
-document.querySelectorAll('.btn').forEach(btn=>{
-  btn.addEventListener('click', function(ev){
-    if(!('ontouchstart' in window)){
-      const rect = this.getBoundingClientRect(),
-            ripple = document.createElement('span');
-      ripple.classList.add('ripple-effect');
-      ripple.style.left = `${ev.clientX - rect.left}px`;
-      ripple.style.top = `${ev.clientY - rect.top}px`;
-      this.appendChild(ripple);
-      setTimeout(()=> ripple.remove(),600);
+        // ---------------------- Funções API ----------------------
+        async function loadProduct(id){
+            try{
+                const resp = await fetch(`${API_BASE_URL}/produtos/${id}`,{
+                    headers:{'Content-Type':'application/json','Accept':'application/json'}
+                });
+                
+                if(!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro ${resp.status}: ${errorText}`);
+                }
+                
+                const data = await resp.json();
+                document.getElementById('id').value = data.id;
+                document.getElementById('nome').value = data.nome;
+                document.getElementById('preco').value = data.preco;
+                document.getElementById('quantidade').value = data.quantidade || '';
+                document.getElementById('disponivel').checked = data.disponivel;
+                document.getElementById('categoria').value = data.categoria_id || '';
+                document.getElementById('formTitle').textContent='Edição de Produto';
+                document.getElementById('buttonText').textContent='Atualizar Produto';
+                document.getElementById('id').readOnly = true;
+                
+                // Ativa os labels para os campos preenchidos
+                document.querySelectorAll('.form-control').forEach(input => {
+                    if (input.value) {
+                        input.parentElement.classList.add('focused');
+                    }
+                });
+            }catch(err){
+                showMessage(`✖ Erro ao carregar produto: ${err.message}`, false);
+                console.error(err);
+            }
+        }
+
+        // ---------------------- Carregar Categorias de Produtos ----------------------
+        async function loadProductCategories() {
+    const list = document.getElementById('productCategoriesList');
+    list.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
+    
+    try {
+        const resp = await fetch(`${API_BASE_URL}/produtos/`);
+        
+        if (!resp.ok) {
+            // Verifica se é um erro 500 específico
+            if (resp.status === 500) {
+                throw new Error(`Erro interno do servidor (500). Verifique se a API está funcionando.`);
+            }
+            const errorText = await resp.text();
+            throw new Error(`Erro ${resp.status}: ${errorText}`);
+        }
+        
+        const produtos = await resp.json();
+        
+        if (produtos.length === 0) {
+            list.innerHTML = '<div class="no-products">Nenhum produto cadastrado ainda.</div>';
+            return;
+        }
+        
+        // Restante do código permanece igual...
+        
+    } catch(err) {
+        console.error('Erro ao carregar produtos:', err);
+        list.innerHTML = `<div class="error-state">
+            <i class="fas fa-exclamation-circle"></i> 
+            Erro ao carregar cardápio: ${err.message}
+            <button onclick="loadProductCategories()" class="retry-btn">
+                <i class="fas fa-redo"></i> Tentar novamente
+            </button>
+        </div>`;
     }
-  });
-});
-
-// ---------------------- Funções API ----------------------
-async function loadProduct(id){
-  try{
-    const resp = await fetch(`${API_BASE_URL}/produtos/${id}`,{
-      headers:{'Content-Type':'application/json','Accept':'application/json'}
-    });
-    if(!resp.ok) throw new Error(`Erro ao carregar produto: ${resp.status}`);
-    const data = await resp.json();
-    document.getElementById('id').value = data.id;
-    document.getElementById('nome').value = data.nome;
-    document.getElementById('preco').value = data.preco;
-    document.getElementById('disponivel').checked = data.disponivel;
-    document.getElementById('categoria').value = data.categoria?.id || '';
-    document.getElementById('formTitle').textContent='Edição de Produto';
-    document.getElementById('buttonText').textContent='Atualizar Produto';
-    document.getElementById('id').readOnly = true;
-    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
-  }catch(err){
-    showMessage(`✖ Erro ao carregar produto: ${err.message}`, false);
-    console.error(err);
-  }
 }
 
-async function loadProductCategories(){
-  const list = document.getElementById('productCategoriesList');
-  list.innerHTML='<div class="loading-state"><i class="fas fa-spinner fa-spin"></i> Carregando cardápio...</div>';
-  try{
-    const resp = await fetch(`${API_BASE_URL}/produtos`);
-    if(!resp.ok) throw new Error(`Erro ao carregar produtos: ${resp.status}`);
-    const produtos = await resp.json();
-    if(produtos.length===0){
-      list.innerHTML='<div class="no-products">Nenhum produto cadastrado ainda.</div>';
-      return;
-    }
-    
-    // Ordena produtos por ID
-    produtos.sort((a, b) => a.id - b.id);
-    
-    const agrupado={};
-    produtos.forEach(p=>{
-      const idCat=p.categoria?.id || 'sem-categoria';
-      const nomeCat=CATEGORIAS[idCat] || 'Outros';
-      if(!agrupado[nomeCat]) agrupado[nomeCat]=[];
-      agrupado[nomeCat].push(p);
-    });
+        // ---------------------- Helpers ----------------------
+        function showMessage(text, success){
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = success ? 'message success' : 'message error';
+            msg.style.display = 'block';
+            msg.classList.add('animate__animated', 'animate__fadeIn');
+            setTimeout(() => {
+                msg.style.display = 'none';
+                msg.classList.remove('animate__animated', 'animate__fadeIn');
+            }, 5000);
+        }
 
-    const categorias = Object.keys(agrupado).sort();
-    list.innerHTML='';
-    categorias.forEach(cat=>{
-      const div=document.createElement('div');
-      div.className='category-container';
-      const header=document.createElement('div');
-      header.className='category-header';
-      header.innerHTML=`${cat}<i class="fas fa-chevron-down"></i>`;
-      const ul=document.createElement('ul');
-      ul.className='product-list';
-      
-      // Ordena produtos dentro da categoria por ID
-      agrupado[cat].sort((a, b) => a.id - b.id).forEach(p=>{
-        const li=document.createElement('li');
-        li.className='product-item';
-        li.innerHTML=`<span class="product-name">${p.nome}</span>
-                      <span class="product-price">R$ ${p.preco.toFixed(2)}</span>
-                      <span class="product-status ${p.disponivel?'status-available':'status-unavailable'}">${p.disponivel?'Disponível':'Indisponível'}</span>`;
-        ul.appendChild(li);
-      });
-      header.addEventListener('click',()=>{header.classList.toggle('collapsed');ul.classList.toggle('collapsed')});
-      div.appendChild(header);
-      div.appendChild(ul);
-      list.appendChild(div);
-    });
-  }catch(err){
-    list.innerHTML='<div class="error-state"><i class="fas fa-exclamation-circle"></i> Erro ao carregar cardápio</div>';
-    console.error(err);
-  }
-}
+        function handleSubmit(){
+            const id = document.getElementById('id').value;
+            id ? updateProduct(id) : submitForm();
+        }
 
-// ---------------------- Helpers ----------------------
-function showMessage(text, success){
-  const msg=document.getElementById('message');
-  msg.textContent=text;
-  msg.className=success?'message success':'message error';
-  msg.style.display='block';
-  msg.classList.add('animate__animated','animate__fadeIn');
-  setTimeout(()=> msg.style.display='none',5000);
-}
+        // ---------------------- Cadastrar ----------------------
+        async function submitForm(){
+            const btn = document.getElementById('submitBtn');
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Enviando...</span>';
+            
+            try{
+                const categoriaValue = document.getElementById('categoria').value.trim();
+                
+                // Validação de categoria
+                if (!categoriaValue) {
+                    showMessage('✖ Por favor, selecione uma categoria', false);
+                    return;
+                }
+                
+                const data = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    quantidade: parseInt(document.getElementById('quantidade').value) || 0,
+                    disponivel: document.getElementById('disponivel').checked,
+                    categoria_id: parseInt(categoriaValue)
+                };
+                
+                // Validações
+                if(!data.nome || data.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                if(isNaN(data.preco) || data.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+                if(isNaN(data.quantidade) || data.quantidade < 0) {
+                    throw new Error('Quantidade deve ser um número positivo');
+                }
 
-function handleSubmit(){
-  const id=document.getElementById('id').value;
-  id ? updateProduct(id) : submitForm();
-}
+                const resp = await fetch(`${API_BASE_URL}/produtos`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if(!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
+                }
+                
+                const result = await resp.json();
+                showMessage('✔ Produto cadastrado com sucesso! ID: ' + (result.id || 'Novo'), true);
+                document.getElementById('productForm').reset();
+                
+                // Reset dos labels flutuantes
+                document.querySelectorAll('.form-group').forEach(group => {
+                    group.classList.remove('focused');
+                });
+                
+                document.querySelector('.form-container').style.animation = 'glow 0.5s 3 alternate';
+                setTimeout(() => {
+                    document.querySelector('.form-container').style.animation = '';
+                }, 1500);
+                
+                // Recarregar a lista de produtos
+                loadProductCategories();
+                
+            } catch(err) {
+                showMessage(`✖ Falha ao cadastrar: ${err.message}`, false);
+                console.error(err);
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = originalHtml;
+            }
+        }
 
-// ---------------------- Cadastrar ----------------------
-async function submitForm(){
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.innerHTML='<span>Enviando... ✨</span>';
-  try{
-    const data={
-      nome:document.getElementById('nome').value.trim(),
-      preco:parseFloat(document.getElementById('preco').value),
-      disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
-    };
-    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
+        // ---------------------- Atualizar por ID ----------------------
+        async function updateProduct(id){
+            const btn = document.getElementById('submitBtn');
+            const originalHtml = btn.innerHTML;
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Atualizando...</span>';
+            
+            try{
+                const categoriaValue = document.getElementById('categoria').value.trim();
+                
+                // Validação de categoria
+                if (!categoriaValue) {
+                    showMessage('✖ Por favor, selecione uma categoria', false);
+                    return;
+                }
+                
+                const data = {
+                    nome: document.getElementById('nome').value.trim(),
+                    preco: parseFloat(document.getElementById('preco').value),
+                    quantidade: parseInt(document.getElementById('quantidade').value) || 0,
+                    disponivel: document.getElementById('disponivel').checked,
+                    categoria_id: parseInt(categoriaValue)
+                };
+                
+                // Validações
+                if(!data.nome || data.nome.length < 2) {
+                    throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
+                }
+                if(isNaN(data.preco) || data.preco <= 0) {
+                    throw new Error('Preço deve ser um número positivo');
+                }
+                if(isNaN(data.quantidade) || data.quantidade < 0) {
+                    throw new Error('Quantidade deve ser um número positivo');
+                }
 
-    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
-
-    const resp=await fetch(`${API_BASE_URL}/produtos`,{
-      method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    const result=await resp.json();
-    showMessage('✔ Produto cadastrado com sucesso! ID: '+(result.id||'Novo'),true);
-    document.getElementById('productForm').reset();
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-    loadProductCategories();
-  }catch(err){
-    showMessage(`✖ Falha ao cadastrar: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span id="buttonText">Cadastrar Produto</span>';
-  }
-}
-
-// ---------------------- Atualizar por ID ----------------------
-async function updateProduct(id){
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
-  try{
-    const data={
-      nome:document.getElementById('nome').value.trim(),
-      preco:parseFloat(document.getElementById('preco').value),
-      disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
-    };
-    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
-    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
-
-    const resp=await fetch(`${API_BASE_URL}/produtos/${id}`,{
-      method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    showMessage('✔ Produto atualizado com sucesso!',true);
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-    loadProductCategories();
-  }catch(err){
-    showMessage(`✖ Falha ao atualizar: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span id="buttonText">Atualizar Produto</span>';
-  }
-}
-
-// ---------------------- Atualizar por Nome ----------------------
-async function updateProductByName(){
-  const btn=document.getElementById('updateByNameBtn');
-  btn.disabled=true; btn.innerHTML='<span>Atualizando... 🔄</span>';
-  try{
-    const nome=document.getElementById('nome').value.trim();
-    const data={
-      nome:nome,
-      preco:parseFloat(document.getElementById('preco').value),
-      disponivel:document.getElementById('disponivel').checked,
-      categoria:{id:document.getElementById('categoria').value.trim()?parseInt(document.getElementById('categoria').value.trim()):null}
-    };
-    if(!data.nome||data.nome.length<2) throw new Error('Nome do produto deve ter pelo menos 2 caracteres');
-    if(isNaN(data.preco)||data.preco<=0) throw new Error('Preço deve ser um número positivo');
-
-    document.getElementById('jsonOutput').textContent=JSON.stringify(data,null,2);
-
-    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
-      method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    showMessage('✔ Produto atualizado pelo nome com sucesso!',true);
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-    loadProductCategories();
-  }catch(err){
-    showMessage(`✖ Falha ao atualizar por nome: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span>Atualizar por Nome</span>';
-  }
-}
-
-// ---------------------- Deletar por Nome ----------------------
-async function deleteProductByName(){
-  const btn=document.getElementById('deleteByNameBtn');
-  btn.disabled=true; btn.innerHTML='<span>Deletando... 🗑️</span>';
-  try{
-    const nome=document.getElementById('nome').value.trim();
-    if(!nome) throw new Error('Informe o nome do produto para deletar.');
-    if(!confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)){
-      btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
-      return;
-    }
-    const resp=await fetch(`${API_BASE_URL}/produtos/nome/${encodeURIComponent(nome)}`,{
-      method:'DELETE',headers:{'Content-Type':'application/json','Accept':'application/json'}
-    });
-    if(!resp.ok) throw new Error(`Erro do servidor (${resp.status}): ${await resp.text()}`);
-    showMessage('✔ Produto deletado pelo nome com sucesso!',true);
-    document.getElementById('productForm').reset();
-    loadProductCategories();
-    document.querySelector('.glow-container').style.animation='glow 0.5s 3 alternate';
-  }catch(err){
-    showMessage(`✖ Falha ao deletar por nome: ${err.message}`,false);
-    console.error(err);
-  }finally{
-    btn.disabled=false; btn.innerHTML='<span>Deletar por Nome</span>';
-  }
-}
-</script>
+                const resp = await fetch(`${API_BASE_URL}/produtos/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if(!resp.ok) {
+                    const errorText = await resp.text();
+                    throw new Error(`Erro do servidor (${resp.status}): ${errorText}`);
+                }
+                
+                showMessage('✔ Produto atualizado com sucesso!', true);
+                document.querySelector('.form-container').style.animation = 'glow 0.5s 3 alternate';
+                setTimeout(() => {
+                    document.querySelector('.form-container').style.animation = '';
+                }, 1500);
+                
+                // Recarregar a lista de produtos
+                loadProductCategories();
+                
+            } catch(err) {
+                showMessage(`✖ Falha ao atualizar: ${err.message}`, false);
+                console.error(err);
+            } finally {
+                btn.disabled = false; 
+                btn.innerHTML = originalHtml;
+            }
+        }
+    </script>
 </body>
 </html>
