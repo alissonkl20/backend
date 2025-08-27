@@ -1,311 +1,194 @@
 @import url(root.css);
-
-/* ===== ESTILOS PARA PÁGINA DE LOGIN ===== */
-
-.glow-container {
+  html, body {
+    height: 100%;
+    margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-}
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bg-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 
-.container {
-    position: relative;
+  /* ===== Partículas ===== */
+  .particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: float 15s infinite linear;
+  }
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-100vh) rotate(360deg); }
+  }
+
+  /* ===== Container principal ===== */
+  .glow-container {
     width: 100%;
     max-width: 450px;
-    z-index: 2;
-}
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.8s ease-out, slideUp 0.8s ease-out;
+    margin: 0 auto;
+  }
 
-.form {
-    background-color: var(--card-bg);
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: var(--card-shadow);
+  .container {
     position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(180%);
+    -webkit-backdrop-filter: blur(15px) saturate(180%);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 2.5rem 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
     overflow: hidden;
-    border: 1px solid var(--border-color);
-}
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
 
-/* Área de login */
-#login-area {
-    text-align: center;
-    margin-bottom: 2rem;
-    position: relative;
-}
+  .container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: var(--gradient-primary);
+    opacity: 0.08;
+    transform: rotate(45deg);
+    z-index: 0;
+    animation: rotateBackground 25s linear infinite;
+  }
 
-#login-area p:first-child {
-    font-size: 2.5rem;
+  .container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+  }
+
+  @keyframes rotateBackground {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* ===== Login Form ===== */
+  .form { position: relative; z-index: 1; }
+
+  #login-area { text-align: center; margin-bottom: 2rem; }
+
+  #login-area p:first-child {
+    font-size: 2.2rem;
     font-weight: 700;
-    color: var(--primary-color);
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     margin-bottom: 0.5rem;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    letter-spacing: 2px;
-}
+    animation: textGlow 2s ease-in-out infinite alternate;
+    z-index: 2;
+  }
 
-#sicro {
-    font-size: 1rem;
+  @keyframes textGlow {
+    0% { text-shadow: 0 0 5px rgba(255,107,53,0.3); }
+    100% { text-shadow: 0 0 15px rgba(255,107,53,0.6); }
+  }
+
+  #sicro {
     color: var(--text-color);
-    opacity: 0.7;
     font-weight: 400;
-}
-
-/* Áreas de input */
-#email-area, #password-area {
-    margin-bottom: 1.5rem;
-    position: relative;
-}
-
-.input {
-    width: 100%;
-    padding: 15px 20px;
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    background-color: var(--input-bg);
-    color: var(--text-color);
     font-size: 1rem;
-    transition: all 0.3s ease;
-    outline: none;
-}
-
-.input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
-}
-
-[data-theme="dark"] .input:focus {
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
-}
-
-.input::placeholder {
-    color: var(--text-color);
-    opacity: 0.6;
-}
-
-/* Link de esqueci a senha */
-#password-area {
-    position: relative;
-}
-
-#password-area a {
-    position: absolute;
-    right: 0;
-    bottom: -25px;
-    font-size: 0.85rem;
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-#password-area a:hover {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-
-/* Área do rodapé */
-#footer-area {
-    margin-top: 2rem;
-}
-
-#footer-area button[type="submit"] {
-    width: 100%;
-    padding: 15px;
-    border: none;
-    border-radius: 10px;
-    background: var(--gradient-primary);
-    color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-}
-
-#footer-area button[type="submit"]:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--glow-primary);
-}
-
-/* Divisor */
-.divider {
-    display: flex;
-    align-items: center;
-    margin: 1.5rem 0;
-    color: var(--text-color);
-    opacity: 0.7;
-}
-
-.divider::before,
-.divider::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background-color: var(--border-color);
-}
-
-.divider span {
-    padding: 0 1rem;
-    font-size: 0.9rem;
-}
-
-/* Botões de login social */
-.social-buttons-container {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.social-login-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-#facebook-login {
-    background: linear-gradient(135deg, #3b5998, #4a69a4);
-    color: white;
-}
-
-#google-login {
-    background: linear-gradient(135deg, #DB4437, #EA4335);
-    color: white;
-}
-
-.social-login-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-#facebook-login:hover {
-    box-shadow: 0 5px 15px rgba(59, 89, 152, 0.4);
-}
-
-#google-login:hover {
-    box-shadow: 0 5px 15px rgba(219, 68, 55, 0.4);
-}
-
-/* Texto de cadastro */
-#text-inside {
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-#text-inside p {
-    margin: 0;
-    color: var(--text-color);
     opacity: 0.8;
-}
+  }
 
-#link {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-#link:hover {
-    color: var(--secondary-color);
-    text-decoration: underline;
-}
-
-/* Botão de alternar tema */
-.theme-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: none;
-    background: var(--gradient-primary);
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-    z-index: 1000;
+  /* ===== Botões sociais ===== */
+  .social-buttons-container { margin-top: 1.5rem; }
+  .social-login-btn {
     display: flex;
-    justify-content: center;
     align-items: center;
-}
+    justify-content: center;
+    gap: 12px;
+    background: var(--gradient-primary);
+    color: #fff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+  .social-login-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+  .social-login-btn:active { transform: translateY(0); }
+  .social-login-btn i { font-size: 1.3rem; }
 
-.theme-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: var(--glow-primary);
-}
-
-/* Efeito ripple */
-.ripple-effect {
+  /* Efeito ripple */
+  .ripple-effect {
     position: absolute;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.7);
+    background: rgba(255,255,255,0.6);
     transform: scale(0);
     animation: ripple 0.6s linear;
-}
+    pointer-events: none;
+  }
+  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
 
-@keyframes ripple {
-    to {
-        transform: scale(2.5);
-        opacity: 0;
-    }
-}
+  /* ===== Mensagens flash ===== */
+  .flash-messages { margin-bottom: 1.5rem; animation: fadeIn 0.5s ease-out; }
+  .flash {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 500;
+    animation: slideIn 0.5s ease-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .flash.success { background: var(--success-color); color: #fff; }
+  .flash.danger { background: var(--danger-color); color: #fff; }
+  .flash.warning { background: var(--warning-color); color: #000; }
+  .flash.info { background: var(--info-color); color: #fff; }
 
-/* Responsividade */
-@media (max-width: 576px) {
-    .form {
-        padding: 1.5rem;
-    }
-    
-    #login-area p:first-child {
-        font-size: 2rem;
-    }
-    
-    .social-buttons-container {
-        gap: 0.8rem;
-    }
-    
-    .social-login-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.1rem;
-    }
-    
-    #text-inside {
-        flex-direction: column;
-        gap: 0.2rem;
-    }
-}
+  /* ===== Theme toggle ===== */
+  .theme-toggle {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--card-bg);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+  }
+  .theme-toggle:hover { transform: rotate(45deg); box-shadow: 0 0 15px var(--primary-color); }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255,107,53,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+  }
 
-/* Animações suaves */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.glow-container {
-    animation: fadeIn 0.5s ease-out;
-}
+  /* ===== Animações ===== */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  @keyframes slideIn { from { transform: translateX(-20px); opacity:0; } to { transform: translateX(0); opacity:1; } }

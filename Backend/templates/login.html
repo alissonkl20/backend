@@ -1,199 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
-    <title>Login com Sistema de Temas</title>
-    <!-- Biblioteca de criptografia -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-</head>
-<body>
-    <div class="glow-container">
-        <div class="container">
-            <!-- Formulário de login - CORRIGIDO com action -->
-            <form class="form" method="POST" action="{{ url_for('main.login') }}" id="loginForm">
-                <div id="login-area">
-                    <p>LOGIN</p>
-                    <p id="sicro">Log in to your account</p>
-                </div>
-                <div id="email-area">
-                    <input placeholder="EMAIL" id="email" name="email" class="input" type="email" required />
-                </div>
-                <div id="password-area">
-                    <input placeholder="PASSWORD" id="password" name="password" class="input" type="password" required />
-                    <a href="#">Forgot password?</a>
-                </div>
-               <div id="footer-area">
-    <button type="submit">Log In</button>
-    
-    <!-- Divisor entre formulário e login social -->
-    <div class="divider">
-        <span>ou</span>
-    </div>
-    
-    <!-- Container para os botões sociais -->
-    <div class="social-buttons-container">
-        <!-- Botão de login com Facebook -->
-        <button type="button" id="facebook-login" class="social-login-btn">
-            <i class="fab fa-facebook-f"></i> 
-        </button>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Sistema de Cardápio</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+<body data-theme="light">
+  <!-- Partículas -->
+  <div class="particles" id="particles"></div>
 
-        <!-- Botão de login com Google -->
-        <button type="button" id="google-login" class="social-login-btn">
-            <i class="fab fa-google"></i> 
-        </button>
-    </div>
-    
-    <div id="text-inside">
-        <p>Don't have an account?</p>
-        <a id="link" href="{{ url_for('main.cadastro_usuario') }}">Sign Up</a>
-    </div>
-</div>
-                </div>
-            </form>
+  <div class="glow-container">
+    <div class="container">
+      <form class="form">
+        <div id="login-area">
+          <p>LOGIN</p>
+          <p id="sicro">Faça login com sua conta Google</p>
         </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">
+                <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="social-buttons-container">
+          <a href="{{ url_for('main.login_google') }}" class="social-login-btn">
+            <i class="fab fa-google"></i> Continuar com Google
+          </a>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <button class="theme-toggle" id="themeToggle">🌙</button>
+  <button class="theme-toggle" id="themeToggle">🌙</button>
 
-    <script>
-        // Criptografa a senha antes de enviar
-        document.getElementById("loginForm").addEventListener("submit", function(e) {
-            const passwordInput = document.getElementById("password");
-            const hashed = CryptoJS.SHA256(passwordInput.value).toString();
-            passwordInput.value = hashed;
-        });
+<script>
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+const savedTheme = localStorage.getItem('theme');
+if(savedTheme) { body.setAttribute('data-theme', savedTheme); updateThemeButton(savedTheme); }
 
-        // Alternar tema
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            body.setAttribute('data-theme', savedTheme);
-            updateThemeButton(savedTheme);
-        }
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeButton(newTheme);
-        });
-        function updateThemeButton(theme) {
-            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-        }
+themeToggle.addEventListener('click', () => {
+  const currentTheme = body.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  body.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeButton(newTheme);
+  createParticles();
+});
+function updateThemeButton(theme){ themeToggle.textContent = theme==='dark'? '☀️':'🌙'; }
 
-        // Efeito ripple nos botões
-        document.querySelectorAll('button').forEach(button => {
-            button.addEventListener('click', function(e) {
-                const ripple = document.createElement('span');
-                ripple.classList.add('ripple-effect');
-                this.appendChild(ripple);
-                const x = e.clientX - this.getBoundingClientRect().left;
-                const y = e.clientY - this.getBoundingClientRect().top;
-                ripple.style.left = `${x}px`;
-                ripple.style.top = `${y}px`;
-                setTimeout(() => { ripple.remove(); }, 600);
-            });
-        });
+// Ripple
+document.querySelectorAll('button, .social-login-btn').forEach(button => {
+  button.addEventListener('click', function(e){
+    const ripple = document.createElement('span');
+    ripple.classList.add('ripple-effect'); this.appendChild(ripple);
+    const x = e.clientX - this.getBoundingClientRect().left;
+    const y = e.clientY - this.getBoundingClientRect().top;
+    ripple.style.left=`${x}px`; ripple.style.top=`${y}px`;
+    setTimeout(()=>ripple.remove(),600);
+  });
+});
 
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId: 'SEU_APP_ID_AQUI', // SUBSTITUA PELO SEU APP ID REAL
-                cookie: true,
-                xfbml: true,
-                version: 'v19.0'
-            });
-            
-            console.log('Facebook SDK inicializado');
-            
-            // Agora que está inicializado, podemos adicionar o event listener
-            document.getElementById('facebook-login').addEventListener('click', facebookLoginHandler);
-        };
+// Flash auto-remove
+setTimeout(()=>{ document.querySelectorAll('.flash').forEach(msg=>{ msg.style.opacity='0'; setTimeout(()=>msg.remove(),600); }); },5000);
 
-        // Carregar SDK do Facebook - CORRIGIDO
-        (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            // Usar protocolo relativo para funcionar em HTTP e HTTPS
-            js.src = "//connect.facebook.net/pt_BR/sdk.js";
-            js.async = true;
-            js.defer = true;
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-
-        // Função de login com Facebook - CORRIGIDA
-        function facebookLoginHandler() {
-            // Verificar se estamos em localhost (permitido) ou HTTPS
-            const isLocalhost = window.location.hostname === 'localhost' || 
-                               window.location.hostname === '127.0.0.1';
-            const isHttps = window.location.protocol === 'https:';
-            
-            if (!isLocalhost && !isHttps) {
-                alert('Para login com Facebook, esta página precisa usar HTTPS.');
-                return;
-            }
-
-            // Verificar se o SDK foi inicializado
-            if (typeof FB === 'undefined') {
-                alert('Facebook SDK não carregado. Aguarde um momento e tente novamente.');
-                return;
-            }
-
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    console.log('Login autorizado, obtendo informações...');
-                    
-                    FB.api('/me', {fields: 'name,email'}, function(userInfo) {
-                        console.log('Dados do usuário:', userInfo);
-                        
-                        // Enviar para o servidor
-                        fetch('{{ url_for("main.facebook_login") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                accessToken: response.authResponse.accessToken,
-                                email: userInfo.email,
-                                name: userInfo.name,
-                                userID: userInfo.id
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                window.location.href = data.redirect || '/';
-                            } else {
-                                alert('Erro no login: ' + (data.message || 'Erro desconhecido'));
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Erro:', error);
-                            alert('Erro ao conectar com o servidor');
-                        });
-                    });
-                } else {
-                    console.log('Login com Facebook cancelado pelo usuário');
-                }
-            }, {scope: 'email,public_profile', return_scopes: true});
-        }
-
-        // Inicialmente desativar o botão até o SDK carregar
-        document.getElementById('facebook-login').addEventListener('click', function(e) {
-            if (typeof FB === 'undefined') {
-                e.preventDefault();
-                alert('Facebook SDK ainda não carregou. Aguarde um momento.');
-            }
-        });
-
-        // Botão do Google
-        document.getElementById('google-login').addEventListener('click', function() {
-            alert('Login com Google será implementado em breve');
-        });
-    </script>
+// Partículas
+function createParticles(){
+  const particlesContainer = document.getElementById('particles');
+  particlesContainer.innerHTML='';
+  const particleCount = 30;
+  const colors = body.getAttribute('data-theme')==='dark'?['#dc2626','#ef4444','#991b1b','#7f1d1d']:['#ff6b35','#ff8e53','#00c897','#00e3ae'];
+  for(let i=0;i<particleCount;i++){
+    const particle=document.createElement('div');
+    particle.classList.add('particle');
+    const size=Math.random()*20+5;
+    particle.style.width=`${size}px`;
+    particle.style.height=`${size}px`;
+    particle.style.left=`${Math.random()*100}%`;
+    particle.style.top=`${Math.random()*100}%`;
+    particle.style.background=colors[Math.floor(Math.random()*colors.length)];
+    const duration=Math.random()*20+15;
+    const delay=Math.random()*5;
+    particle.style.animationDuration=`${duration}s`;
+    particle.style.animationDelay=`${delay}s`;
+    particlesContainer.appendChild(particle);
+  }
+}
+createParticles();
+</script>
 </body>
 </html>
