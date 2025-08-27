@@ -11,12 +11,13 @@ class ProdutoModel(db.Model):
     preco = db.Column(Numeric(10, 2), nullable=False)
     disponivel = db.Column(db.Boolean, nullable=False, default=True)
     descricao = db.Column(db.String(500), nullable=True)
+    quantidade = db.Column(db.Integer, default=0, nullable=False)  # Adicionado campo quantidade
     
     # Chaves estrangeiras
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'))
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     
-    # Relacionamento com categoria - CORRIGIDO
+    # Relacionamento com categoria
     categoria = relationship("CategoriaModel", back_populates="produtos", foreign_keys=[categoria_id])
     
     def to_dict(self):
@@ -24,11 +25,11 @@ class ProdutoModel(db.Model):
             'id': self.id,
             'nome': self.nome,
             'preco': float(self.preco),
-            'quantidade': int(self.quantidade) if isinstance(self.quantidade, Decimal) else self.quantidade,
+            'quantidade': self.quantidade,
             'disponivel': self.disponivel,
             'descricao': self.descricao,
             'categoria_id': self.categoria_id,
-            'categoria_nome': self.categoria.nome if self.categoria else None,
+            'categoria_nome': self.categoria.nome if self.categoria else 'Sem categoria',
             'usuario_id': self.usuario_id
         }
     
