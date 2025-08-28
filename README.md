@@ -1,100 +1,97 @@
-(![dashprod-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/1f21cf18-f4ee-4bf4-b682-59fdc42a0e06)
-)
+Documentação do Sistema de Controle de Estoque
+📋 Visão Geral
+Este projeto é um sistema completo de controle de estoque desenvolvido com Flask, implementando o padrão MVC (Model-View-Controller). A aplicação permite gerenciar categorias e produtos, com autenticação de usuários via Google OAuth e interface responsiva.
 
-Sistema de Controle de Estoque com Flask
+🚀 Funcionalidades Principais
+✅ Autenticação de usuários com Google OAuth
 
-Este projeto é um sistema de controle de estoque desenvolvido com Flask (backend) e HTML/CSS (frontend) seguindo o padrão MVC (Model-View-Controller). A aplicação permite gerenciar categorias e produtos, com um cardápio que renderiza as categorias e seus respectivos produtos.
+✅ Gestão completa de categorias
 
-📋 Funcionalidades
-🗂️ Gestão de Categorias
-Criar novas categorias
+✅ Controle de produtos com associação a categorias
 
-Visualizar todas as categorias existentes
+✅ Dashboard interativo
 
-Editar informações das categorias
+✅ Cardápio/catálogo organizado por categorias
 
-Excluir categorias (com verificação de produtos associados)
-
-📦 Gestão de Produtos
-Adicionar novos produtos associados a categorias
-
-Visualizar lista de produtos com informações detalhadas
-
-Editar informações dos produtos
-
-Excluir produtos
-
-Controle de estoque (quantidade disponível)
-
-🖥️ Cardápio/Catálogo
-Visualização organizada por categorias
-
-Apresentação dos produtos de forma atrativa
-
-Interface responsiva para diferentes dispositivos
+✅ Interface responsiva
 
 🛠️ Tecnologias Utilizadas
 Backend: Flask (Python)
 
-Frontend: HTML5, CSS3
+Frontend: HTML5, CSS3, JavaScript
 
-Padrão de Arquitetura: MVC (Model-View-Controller)
+Autenticação: Flask-Login, OAuth (Google)
 
-Banco de Dados: SQLite (ou outro conforme configuração)
+Banco de Dados: SQLAlchemy (SQLite/PostgreSQL)
 
 Hospedagem: Render
 
-Versionamento: Git
+Outras: Flask-Bcrypt, Flask-SQLAlchemy, python-dotenv
 
 📁 Estrutura do Projeto
 text
 projeto-estoque-flask/
 │
-├── app.py                 # Arquivo principal da aplicação Flask
-├── requirements.txt       # Dependências do projeto
-├── Procfile              # Configuração para deploy no Render
-├── .gitignore            # Arquivos a serem ignorados pelo Git
+├── main.py                 # Arquivo principal da aplicação
+├── requirements.txt        # Dependências do projeto
+├── Procfile               # Configuração para deploy no Render
+├── .env                   # Variáveis de ambiente (local)
+├── .gitignore            # Arquivos ignorados pelo Git
 │
-├── models/               # Pasta dos modelos (Model)
+├── controller/            # Controladores (Blueprints)
 │   ├── __init__.py
-│   ├── database.py       # Configuração e modelos do banco de dados
-│   ├── categoria.py      # Modelo de Categoria
-│   └── produto.py        # Modelo de Produto
+│   ├── CategoriaController.py
+│   └── ProdutoController.py
 │
-├── controllers/          # Pasta dos controladores (Controller)
+├── model/                 # Modelos de dados
 │   ├── __init__.py
-│   ├── categoria_controller.py  # Controlador para categorias
-│   └── produto_controller.py    # Controlador para produtos
+│   ├── UserModel.py
+│   ├── CategoriaModel.py
+│   └── ProdutoModel.py
 │
-├── views/                # Pasta das visualizações (View)
-│   ├── templates/        # Templates HTML
-│   │   ├── base.html     # Template base
-│   │   ├── index.html    # Página inicial
-│   │   ├── categorias/   # Templates relacionados a categorias
-│   │   └── produtos/     # Templates relacionados a produtos
-│   │
-│   └── static/           # Arquivos estáticos
-│       ├── css/
-│       │   └── style.css # Estilos CSS
-│       ├── js/
-│       └── images/
+├── repository/            # Camada de repositório
+│   └── CategoriaRepository.py
 │
-└── README.md             # Este arquivo de documentação
-🚀 Configuração e Instalação
+├── extensions.py          # Inicialização de extensões Flask
+├── main_routes.py         # Rotas principais e autenticação
+│
+├── templates/             # Templates HTML
+│   ├── base.html
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── cardapio.html
+│   ├── categorias.html
+│   ├── categoria_form.html
+│   └── create_product.html
+│
+└── static/                # Arquivos estáticos
+    ├── css/
+    ├── js/
+    └── images/
+🔧 Configuração e Instalação
 Pré-requisitos
-Python 3.8 ou superior
+Python 3.8+
 
-Pip (gerenciador de pacotes do Python)
+Conta no Google Developers para OAuth
 
-Git
+Conta no Render para deploy
 
-Passos para execução local
+Variáveis de Ambiente
+Crie um arquivo .env na raiz do projeto:
+
+env
+SECRET_KEY=sua_chave_secreta_aqui
+DATABASE_URL=sqlite:///database.db
+GOOGLE_CLIENT_ID=seu_google_client_id
+GOOGLE_CLIENT_SECRET=seu_google_client_secret
+RENDER=false  # Definir como true apenas no Render
+Instalação Local
 Clone o repositório:
 
 bash
 git clone <url-do-repositorio>
 cd projeto-estoque-flask
-Crie um ambiente virtual (recomendado):
+Crie um ambiente virtual:
 
 bash
 python -m venv venv
@@ -108,116 +105,115 @@ pip install -r requirements.txt
 Execute a aplicação:
 
 bash
-python app.py
-Acesse no navegador:
+python main.py
+Acesse: http://localhost:5000
 
-text
-http://localhost:5000
 🌐 Deploy no Render
-Pré-requisitos
-Conta no Render
+Conecte seu repositório ao Render
 
-Repositório Git do projeto
+Configure as variáveis de ambiente no painel do Render:
 
-Passos para deploy
-Conecte seu repositório Git ao Render
+SECRET_KEY: Gere uma chave secreta
 
-Configure as seguintes variáveis de ambiente (se necessário):
+DATABASE_URL: URL do banco de dados PostgreSQL (fornecida pelo Render)
 
-PYTHON_VERSION: 3.8.0 (ou superior)
+GOOGLE_CLIENT_ID: Seu Client ID do Google
 
-O Render detectará automaticamente o requirements.txt e o Procfile
+GOOGLE_CLIENT_SECRET: Seu Client Secret do Google
 
-Faça o deploy - o Render construirá e hospedará sua aplicação automaticamente
+RENDER: true
 
-🏗️ Estrutura MVC Explicada
-Model (Modelos)
-Responsável pela representação dos dados e lógica de negócio
+O Render detectará automaticamente as configurações e fará o deploy
 
-Classes: Categoria, Produto
+🔐 Autenticação com Google OAuth
+O sistema implementa autenticação segura usando Google OAuth 2.0:
 
-Interage com o banco de dados
+Configure um projeto no Google Cloud Console
 
-View (Visualização)
-Templates HTML para renderização da interface
+Adicione as URIs de redirecionamento:
 
-Arquivos estáticos (CSS, JS, imagens)
+Desenvolvimento: http://localhost:5000/login/google/callback
 
-Apresenta os dados para o usuário final
+Produção: https://seu-app.onrender.com/login/google/callback
 
-Controller (Controlador)
-Intermediário entre Model e View
+Obtenha as credenciais (Client ID e Client Secret)
 
-Processa requisições HTTP
+🗃️ Estrutura do Banco de Dados
+Tabelas Principais:
+usuarios: Informações dos usuários (com suporte a login Google)
 
-Implementa a lógica da aplicação
+categorias: Categorias de produtos (relacionadas aos usuários)
 
-Controladores: CategoriaController, ProdutoController
+produtos: Produtos do estoque (relacionados a categorias e usuários)
 
-🔌 Exemplos de Uso da API
-Categorias
-GET /categorias - Lista todas as categorias
+📊 API e Rotas Principais
+Autenticação:
+GET /login - Página de login
 
-POST /categoria - Cria uma nova categoria
+GET /login/google - Iniciar autenticação Google
 
-PUT /categoria/<id> - Atualiza uma categoria
+GET /login/google/callback - Callback do Google OAuth
 
-DELETE /categoria/<id> - Exclui uma categoria
+GET /logout - Logout do usuário
 
-Produtos
-GET /produtos - Lista todos os produtos
+Dashboard e Gerenciamento:
+GET / ou GET /dashboard - Dashboard principal
 
-POST /produto - Adiciona um novo produto
+GET /cardapio - Visualização do cardápio
 
-PUT /produto/<id> - Atualiza um produto
+GET /categorias - Listagem de categorias
 
-DELETE /produto/<id> - Exclui um produto
+CRUD Categorias:
+GET /create_categoria - Formulário de criação
+
+POST /create_categoria - Criar categoria
+
+GET /edit_categoria/<id> - Formulário de edição
+
+POST /edit_categoria/<id> - Editar categoria
+
+POST /delete_categoria/<id> - Excluir categoria
+
+Produtos:
+GET /create_product - Formulário de criação de produto
 
 🎨 Personalização
-Para personalizar o sistema, você pode:
+Adicionar Novos Campos aos Modelos:
+Edite os arquivos na pasta model/ e execute migração do banco.
 
-Modificar o esquema do banco de dados em models/database.py
+Modificar Templates:
+Os templates HTML estão na pasta templates/.
 
-Adicionar novos campos aos modelos existentes
+Estilos CSS:
+Edite os arquivos na pasta static/css/.
 
-Criar novos templates na pasta views/templates/
-
-Adicionar estilos personalizados em views/static/css/style.css
-
-Implementar novas funcionalidades seguindo o padrão MVC
-
-❓ Troubleshooting
-Problemas Comuns
+❓ Solução de Problemas
+Erros Comuns:
 Erro de importação: Verifique se todas as dependências estão instaladas
 
-Problemas de banco de dados: Execute novamente a inicialização do banco
+Problemas de banco: Execute db.create_all() no contexto da aplicação
 
-Erro no deploy: Verifique os logs no Render para detalhes
+Erro OAuth: Verifique as credenciais do Google e URIs de redirecionamento
 
-Obtendo Ajuda
-Se encontrar problemas:
+Logs:
+Em desenvolvimento: Os erros são exibidos no terminal
 
-Verifique a documentação do Flask
+No Render: Acesse os logs pelo painel do Render
 
-Consulte os logs de erro da aplicação
+🔮 Próximas Melhorias
+Sistema de permissões e roles
 
-Verifique se todas as variáveis de ambiente estão configuradas corretamente
+Relatórios e analytics
 
-🔮 Próximas Melhorias Possíveis
-Implementar autenticação de usuários
+Upload de imagens para produtos
 
-Adicionar sistema de permissões
+API RESTful para integração
 
-Criar relatórios de estoque
+Sistema de pedidos e vendas
 
-Adicionar busca e filtros avançados
-
-Implementar upload de imagens para produtos
-
-Criar API RESTful para integração com outros sistemas
+Notificações e alertas de estoque
 
 📄 Licença
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
 
 Desenvolvido com ❤️ usando Flask e hospedado no Render.
-
