@@ -2,7 +2,8 @@
 
 ## 🎥 Demonstração Rápida (40 segundos)
 
-![rend-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/a017a4e6-89e3-43c2-975f-4a16fbb1028e)
+![rend-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/6c5e5501-644e-499d-80a7-b457c8e3eb07)
+
 
 *GIF mostrando as principais funcionalidades do sistema*
 
