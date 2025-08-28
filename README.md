@@ -1,13 +1,13 @@
-## 🎥 Demonstração do Sistema
+# Documentação do Sistema de Controle de Estoque
 
-![Demonstração do Sistema de Estoque](![Uploading rend-ezgif.com-video-to-gif-converter.gif…]()
-)
+## 🎥 Demonstração Rápida (40 segundos)
 
+![rend-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/a017a4e6-89e3-43c2-975f-4a16fbb1028e)
 
+*GIF mostrando as principais funcionalidades do sistema*
 
-Documentação do Sistema de Controle de Estoque
-📋 Visão Geral
-Este projeto é um sistema completo de controle de estoque desenvolvido com Flask, implementando o padrão MVC (Model-View-Controller). A aplicação permite gerenciar categorias e produtos, com autenticação de usuários via Google OAuth e interface responsiva.
+## 📋 Visão Geral
+Este projeto é um sistema completo de controle de estoque desenvolvido com Flask implementando o padrão MVC (Model-View-Controller). A aplicação permite gerenciar categorias e produtos, com autenticação de usuários via Google OAuth e interface responsiva.
 
 🚀 Funcionalidades Principais
 ✅ Autenticação de usuários com Google OAuth
