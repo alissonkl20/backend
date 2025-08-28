@@ -2,10 +2,6 @@
 )
 
 Sistema de Controle de Estoque com Flask
-https://img.shields.io/badge/Flask-2.3.3-green.svg
-https://img.shields.io/badge/Python-3.8%252B-blue.svg
-https://img.shields.io/badge/License-MIT-yellow.svg
-https://img.shields.io/badge/Deployed%2520on-Render-5c5c5c.svg
 
 Este projeto é um sistema de controle de estoque desenvolvido com Flask (backend) e HTML/CSS (frontend) seguindo o padrão MVC (Model-View-Controller). A aplicação permite gerenciar categorias e produtos, com um cardápio que renderiza as categorias e seus respectivos produtos.
 
