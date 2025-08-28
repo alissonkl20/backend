@@ -1,6 +1,6 @@
 # Documentação do Sistema de Controle de Estoque
 
-## 🎥 Demonstração Rápida (40 segundos)
+## 🎥 Demonstração Breve
 
 ![rend-ezgif com-video-to-gif-converter (1)](https://github.com/user-attachments/assets/47ad7d22-9eb6-4c24-92ee-de53905921f4)
 
